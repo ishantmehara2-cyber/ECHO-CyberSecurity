@@ -1,37 +1,62 @@
-# ECHO
+# ECHO - Evidence-Centric Hypothesis & Correlation Oracle
 
-## Security Telemetry Correlation & Attack Reconstruction Engine
+ECHO is a professional web-based cybersecurity investigation platform.
 
-ECHO is a cybersecurity investigation platform designed to correlate heterogeneous security telemetry and reconstruct multi-stage cyber attacks.
+## Problem Being Solved
+Modern Security Operations Centers (SOCs) are overwhelmed with disconnected alerts from disparate tools (EDR, NDR, IAM, etc.). ECHO's goal is to ingest this disconnected telemetry, normalize it, and automatically identify similarities (same identity, device, IP, and time) to reconstruct explainable multi-stage cyberattack sequences. 
 
-The system transforms disconnected security events into an understandable attack narrative, identifies evidence gaps, and provides explainable hypotheses for missing stages.
+The most important product philosophy of ECHO is: **"Make the invisible investigation process visible."**
 
-## Core Capabilities
+## Conceptual Workflow
+1. **INGEST**: Receive raw security events.
+2. **NORMALIZE**: Convert different security data into one comparable format.
+3. **COMPARE**: Look for the same people, devices, addresses, and time patterns.
+4. **CONNECT**: Link events when meaningful similarities are found.
+5. **RECONSTRUCT**: Build the attack timeline.
+6. **EXPLAIN**: Translate findings to plain text.
 
-- Multi-source telemetry ingestion
-- Event normalization
-- Entity correlation
-- Temporal attack reconstruction
-- Interactive attack graph visualization
-- Evidence gap detection
-- Explainable hypothesis scoring
-- Incident replay and simulation
+## Phase 1 Status
+Phase 1 focuses exclusively on establishing the **professional project foundation** and **cybersecurity command-center design system**.
+Currently, the UI is an interactive shell demonstrating how future processing will occur. The frontend successfully communicates with the backend health endpoint, validating the architecture. Live telemetry ingestion, graph correlation, and attack reconstruction are planned for Phase 2.
 
-## Tech Stack
+## Technology Stack
+- **Frontend**: React, TypeScript, Vite, Tailwind CSS, React Router, Lucide React icons
+- **Backend**: Python, FastAPI, Uvicorn, Pydantic
 
-### Frontend
-- React
-- TypeScript
-- Vite
-- Tailwind CSS
-- React Flow
+## Project Architecture
+```
+ECHO-CyberSecurity/
+├── frontend/             # React/Vite/Tailwind Application
+│   ├── src/
+│   │   ├── components/
+│   │   ├── layouts/
+│   │   ├── pages/
+│   │   └── ...
+├── backend/              # Python/FastAPI Application
+│   ├── app/
+│   │   ├── api/
+│   │   ├── core/
+│   │   ├── main.py
+│   │   └── ...
+│   └── requirements.txt
+└── datasets/             # Future dataset storage
+```
 
-### Backend
-- Python
-- FastAPI
-- NetworkX
-- WebSockets
+## Setup & Running Instructions
 
-## Development
+### 1. Run the Backend
+```bash
+cd backend
+pip install -r requirements.txt
+python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+```
+The backend API will run at `http://localhost:8000`. You can check the health endpoint at `http://localhost:8000/health`.
 
-This project is being developed as a cybersecurity hackathon solution with an emphasis on explainability, reproducibility, and safe simulation.git 
+### 2. Run the Frontend
+In a new terminal window:
+```bash
+cd frontend
+npm install
+npm run dev
+```
+The frontend application will be available at `http://localhost:5173`.
