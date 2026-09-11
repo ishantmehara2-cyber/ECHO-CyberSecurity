@@ -22,41 +22,7 @@ Currently, the UI is an interactive shell demonstrating how future processing wi
 ## Technology Stack
 - **Frontend**: React, TypeScript, Vite, Tailwind CSS, React Router, Lucide React icons
 - **Backend**: Python, FastAPI, Uvicorn, Pydantic
-
-## Project Architecture
-```
-ECHO-CyberSecurity/
-├── frontend/             # React/Vite/Tailwind Application
-│   ├── src/
-│   │   ├── components/
-│   │   ├── layouts/
-│   │   ├── pages/
-│   │   └── ...
-├── backend/              # Python/FastAPI Application
-│   ├── app/
-│   │   ├── api/
-│   │   ├── core/
-│   │   ├── main.py
-│   │   └── ...
-│   └── requirements.txt
-└── datasets/             # Future dataset storage
-```
-
 ## Setup & Running Instructions
 
-### 1. Run the Backend
-```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
-```
 The backend API will run at `http://localhost:8000`. You can check the health endpoint at `http://localhost:8000/health`.
-
-### 2. Run the Frontend
-In a new terminal window:
-```bash
-cd frontend
-npm install
-npm run dev
-```
 The frontend application will be available at `http://localhost:5173`.
