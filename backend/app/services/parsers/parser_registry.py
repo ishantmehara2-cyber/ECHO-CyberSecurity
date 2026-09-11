@@ -2,6 +2,8 @@ from typing import List, Dict, Any, Tuple
 from app.services.parsers.json_parser import JsonParser
 from app.services.parsers.jsonl_parser import JsonlParser
 from app.services.parsers.csv_parser import CsvParser
+from app.services.parsers.xml_parser import XmlParser
+from app.services.parsers.pdf_parser import PdfParser
 from app.services.parsers.text_log_parser import TextLogParser
 from app.services.parsers.source_classifier import classify_event_source
 
@@ -9,6 +11,8 @@ PARSERS = [
     ("JSON", JsonParser()),
     ("JSONL", JsonlParser()),
     ("CSV", CsvParser()),
+    ("XML", XmlParser()),
+    ("PDF", PdfParser()),
     ("LOG", TextLogParser()),
 ]
 

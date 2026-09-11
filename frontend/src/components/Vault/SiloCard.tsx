@@ -22,6 +22,8 @@ interface SiloCardProps {
   onMoveSlot?: (fromSlotKey: SiloSlotKey, targetSlotKey: SiloSlotKey) => void;
 }
 
+const ALLOWED_EXTENSIONS = ['.pdf', '.csv', '.json', '.jsonl', '.ndjson', '.log', '.txt', '.xml'];
+
 const iconMap: Record<string, React.ElementType> = {
   Lock,
   Globe,
@@ -44,26 +46,35 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
     setIsDragging(false);
   };
 
+  const filterSupportedFiles = (fileList: File[]): File[] => {
+    return fileList.filter((f) => {
+      const lower = f.name.toLowerCase();
+      return ALLOWED_EXTENSIONS.some((ext) => lower.endsWith(ext));
+    });
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files).filter(
-        (f) => f.type === 'application/pdf' || f.name.endsWith('.pdf')
-      );
-      if (droppedFiles.length > 0) {
-        onUpload(config.key, droppedFiles);
+      const validFiles = filterSupportedFiles(Array.from(e.dataTransfer.files));
+      if (validFiles.length > 0) {
+        onUpload(config.key, validFiles);
       }
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      onUpload(config.key, selectedFiles);
+      const validFiles = filterSupportedFiles(Array.from(e.target.files));
+      if (validFiles.length > 0) {
+        onUpload(config.key, validFiles);
+      }
       e.target.value = '';
     }
   };
+
+  const fileExtension = file ? file.name.split('.').pop()?.toUpperCase() : '';
 
   return (
     <div
@@ -82,7 +93,7 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
         type="file"
         ref={fileInputRef}
         onChange={handleFileChange}
-        accept=".pdf,application/pdf"
+        accept=".pdf,.csv,.json,.jsonl,.ndjson,.log,.txt,.xml"
         className="hidden"
       />
 
@@ -148,7 +159,7 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
               {config.uploadLabel}
             </div>
             <div className="text-[10px] font-mono text-slate-500">
-              Expected: {config.expectedFileName}
+              Supports: .PDF .CSV .JSON .JSONL .LOG .TXT .XML
             </div>
           </div>
         ) : (
@@ -158,13 +169,13 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
               <span className="font-bold text-slate-200 truncate pr-2">
                 📄 {file.name}
               </span>
-              <span className="text-[10px] text-cyan-400 font-bold shrink-0">
-                {file.size}
+              <span className="px-1.5 py-0.5 rounded bg-dark-800 border border-dark-700 text-[10px] font-bold text-slate-300 shrink-0">
+                {fileExtension}
               </span>
             </div>
 
             <div className="text-[11px] text-slate-400 flex items-center justify-between">
-              <span>Source: <strong className="text-slate-200">{file.sourceName}</strong></span>
+              <span>Size: <strong className="text-slate-200">{file.size}</strong></span>
               <span className="text-emerald-400 font-bold flex items-center gap-1">
                 <CheckCircle2 className="w-3.5 h-3.5" /> READY
               </span>

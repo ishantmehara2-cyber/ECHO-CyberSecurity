@@ -23,6 +23,8 @@ interface EvidenceUploadAreaProps {
   isAllDemoFilesPresent: boolean;
 }
 
+const ALLOWED_EXTENSIONS = ['.pdf', '.csv', '.json', '.jsonl', '.ndjson', '.log', '.txt', '.xml'];
+
 const sourceClassificationIcons: Record<string, React.ElementType> = {
   authentication: Lock,
   network: Globe,
@@ -53,25 +55,27 @@ export const EvidenceUploadArea = ({
   };
 
   const processUploadedFiles = (fileList: File[]) => {
-    const validPdfFiles: File[] = [];
+    const validFiles: File[] = [];
     let invalidFound = false;
 
     fileList.forEach((f) => {
-      if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) {
-        validPdfFiles.push(f);
+      const name = f.name.toLowerCase();
+      const isValid = ALLOWED_EXTENSIONS.some((ext) => name.endsWith(ext));
+      if (isValid) {
+        validFiles.push(f);
       } else {
         invalidFound = true;
       }
     });
 
     if (invalidFound) {
-      setErrorMessage('Unable to extract usable telemetry from unsupported document format. Please upload valid .pdf files.');
+      setErrorMessage('Unsupported file format detected. Please upload valid telemetry files (.pdf, .csv, .json, .jsonl, .ndjson, .log, .txt, .xml).');
     } else {
       setErrorMessage(null);
     }
 
-    if (validPdfFiles.length > 0) {
-      onFileUpload(validPdfFiles);
+    if (validFiles.length > 0) {
+      onFileUpload(validFiles);
     }
   };
 
@@ -124,7 +128,7 @@ export const EvidenceUploadArea = ({
           type="file"
           ref={fileInputRef}
           onChange={handleFileChange}
-          accept=".pdf,application/pdf"
+          accept=".pdf,.csv,.json,.jsonl,.ndjson,.log,.txt,.xml"
           multiple
           className="hidden"
         />
@@ -136,15 +140,15 @@ export const EvidenceUploadArea = ({
 
           <div className="space-y-1">
             <h3 className="text-base font-bold text-slate-100">
-              Drag & Drop Evidence PDFs or <span className="text-cyan-400 underline">Browse Files</span>
+              Drag & Drop Evidence Files or <span className="text-cyan-400 underline">Browse Files</span>
             </h3>
-            <p className="text-xs text-slate-400 max-w-lg mx-auto">
-              Upload raw telemetry documents, authentication logs, network captures, or threat feeds for correlation analysis.
+            <p className="text-xs text-slate-400 max-w-lg mx-auto font-sans leading-relaxed">
+              Upload raw telemetry streams, authentication logs, PCAP JSONL, threat feeds, or endpoint logs.
             </p>
           </div>
 
-          <div className="text-[11px] font-mono text-slate-500">
-            Supported formats: PDF • Multiple files allowed
+          <div className="text-[11px] font-mono text-slate-400 font-bold bg-dark-900 px-3 py-1 rounded-full border border-dark-700">
+            Supported Formats: PDF • CSV • JSON • JSONL • LOG • TXT • XML
           </div>
         </div>
       </div>
@@ -156,7 +160,7 @@ export const EvidenceUploadArea = ({
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700 pb-4">
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
+                <h3 className="text-sm font-bold text-slate-100 uppercase tracking-wider font-mono">
                   Loaded Evidence Files ({files.length})
                 </h3>
                 {isAllDemoFilesPresent && (
@@ -183,6 +187,7 @@ export const EvidenceUploadArea = ({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {files.map((file) => {
               const Icon = sourceClassificationIcons[file.classification] || FileText;
+              const ext = file.name.split('.').pop()?.toUpperCase() || 'FILE';
 
               return (
                 <div
@@ -215,9 +220,12 @@ export const EvidenceUploadArea = ({
                       📄 {file.name}
                     </h4>
 
-                    {/* Size */}
-                    <div className="text-[11px] font-mono text-slate-500 mt-2">
-                      Size: {file.size}
+                    {/* Format & Size */}
+                    <div className="flex items-center justify-between text-[11px] font-mono text-slate-400 mt-2">
+                      <span className="px-1.5 py-0.5 rounded bg-dark-800 border border-dark-700 font-bold text-slate-300">
+                        {ext}
+                      </span>
+                      <span>{file.size}</span>
                     </div>
                   </div>
 
@@ -246,7 +254,7 @@ export const EvidenceUploadArea = ({
               <p className="text-xs text-slate-400">
                 {isAllDemoFilesPresent
                   ? 'All 4 official telemetry datasets present. Full deterministic attack chain correlation enabled.'
-                  : 'Custom evidence files loaded. Exploration mode entity analysis active.'}
+                  : 'Custom telemetry files loaded. Multi-source normalization & candidate analysis active.'}
               </p>
             </div>
 

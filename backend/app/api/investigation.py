@@ -1,19 +1,71 @@
 import uuid
 from typing import Dict, Any, List, Optional
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from app.models.schemas import InvestigationResponse
 from app.services.pipeline import run_investigation_pipeline
 from app.services.parsers.parser_registry import parse_and_classify_file
 
-router = APIRouter(prefix="/api/investigations", tags=["investigations"])
+router = APIRouter(prefix="/api", tags=["evidence"])
 
 INVESTIGATIONS_DB: Dict[str, Dict[str, Any]] = {}
 
 class QueryRequest(BaseModel):
     query: str
 
-@router.post("", response_model=Dict[str, Any])
+@router.post("/evidence/upload", response_model=Dict[str, Any])
+async def upload_evidence_file(
+    file: UploadFile = File(...),
+    silo: Optional[str] = Form(None),
+    inv_id: Optional[str] = Form(None)
+):
+    target_id = inv_id or "INV-DEFAULT"
+    if target_id not in INVESTIGATIONS_DB:
+        INVESTIGATIONS_DB[target_id] = {
+            "id": target_id,
+            "mode": "lab",
+            "name": "Investigation Session",
+            "files": [],
+            "parsed_events": [],
+            "result": None
+        }
+
+    # Validate Extension
+    allowed_exts = [".pdf", ".csv", ".json", ".jsonl", ".ndjson", ".log", ".txt", ".xml"]
+    fname_lower = (file.filename or "").lower()
+    if not any(fname_lower.endswith(ext) for ext in allowed_exts):
+        raise HTTPException(
+            status_code=400, 
+            detail="Unsupported file format. Please upload .pdf, .csv, .json, .jsonl, .ndjson, .log, .txt, or .xml files."
+        )
+
+    content_bytes = await file.read()
+    if len(content_bytes) == 0:
+        raise HTTPException(status_code=400, detail="Uploaded file is empty.")
+
+    content_str = content_bytes.decode("utf-8", errors="ignore")
+
+    format_detected, source_detected, events = parse_and_classify_file(content_str, file.filename or "file.log")
+
+    assigned_silo = silo or source_detected
+    if assigned_silo not in ["identity", "network", "threat_intel", "endpoint"]:
+        assigned_silo = "endpoint" if source_detected in ["endpoint", "application"] else "identity" if source_detected == "authentication" else "network" if source_detected == "network" else "threat_intel"
+
+    file_info = {
+        "success": True,
+        "filename": file.filename,
+        "file_type": format_detected.lower(),
+        "silo": assigned_silo,
+        "records_detected": len(events),
+        "status": "ready_for_normalization"
+    }
+
+    INVESTIGATIONS_DB[target_id]["files"].append(file_info)
+    INVESTIGATIONS_DB[target_id]["parsed_events"].extend(events)
+
+    return file_info
+
+@router.post("/investigations", response_model=Dict[str, Any])
 def create_investigation(mode: str = "lab", name: str = "New Cyber Investigation"):
     inv_id = f"INV-{uuid.uuid4().hex[:8]}"
     INVESTIGATIONS_DB[inv_id] = {
@@ -26,37 +78,17 @@ def create_investigation(mode: str = "lab", name: str = "New Cyber Investigation
     }
     return {"investigationId": inv_id, "mode": mode, "name": name, "status": "created"}
 
-@router.post("/{inv_id}/upload", response_model=Dict[str, Any])
+@router.post("/investigations/{inv_id}/upload", response_model=Dict[str, Any])
 async def upload_investigation_file(inv_id: str, file: UploadFile = File(...)):
-    if inv_id not in INVESTIGATIONS_DB:
-        INVESTIGATIONS_DB[inv_id] = {"id": inv_id, "mode": "lab", "name": "Lab Investigation", "files": [], "parsed_events": [], "result": None}
+    return await upload_evidence_file(file=file, inv_id=inv_id)
 
-    content_bytes = await file.read()
-    content_str = content_bytes.decode("utf-8", errors="ignore")
-
-    format_detected, source_detected, events = parse_and_classify_file(content_str, file.filename or "file.log")
-
-    file_info = {
-        "id": f"file-{len(INVESTIGATIONS_DB[inv_id]['files'])+1}",
-        "filename": file.filename,
-        "format": format_detected,
-        "source_type": source_detected,
-        "event_count": len(events),
-        "status": "normalized" if events else "failed"
-    }
-
-    INVESTIGATIONS_DB[inv_id]["files"].append(file_info)
-    INVESTIGATIONS_DB[inv_id]["parsed_events"].extend(events)
-
-    return file_info
-
-@router.get("/{inv_id}/files", response_model=List[Dict[str, Any]])
+@router.get("/investigations/{inv_id}/files", response_model=List[Dict[str, Any]])
 def get_investigation_files(inv_id: str):
     if inv_id not in INVESTIGATIONS_DB:
         return []
     return INVESTIGATIONS_DB[inv_id]["files"]
 
-@router.post("/{inv_id}/analyze", response_model=InvestigationResponse)
+@router.post("/investigations/{inv_id}/analyze", response_model=InvestigationResponse)
 def analyze_investigation(inv_id: str):
     events = INVESTIGATIONS_DB.get(inv_id, {}).get("parsed_events", [])
     result = run_investigation_pipeline(custom_events=events if events else None)
@@ -64,14 +96,14 @@ def analyze_investigation(inv_id: str):
         INVESTIGATIONS_DB[inv_id]["result"] = result
     return result
 
-@router.get("/{inv_id}/summary", response_model=Dict[str, Any])
+@router.get("/investigations/{inv_id}/summary", response_model=Dict[str, Any])
 def get_investigation_summary(inv_id: str):
     res = INVESTIGATIONS_DB.get(inv_id, {}).get("result")
     if not res:
         res = run_investigation_pipeline()
     return res.summary.dict()
 
-@router.get("/{inv_id}/candidates", response_model=List[Dict[str, Any]])
+@router.get("/investigations/{inv_id}/candidates", response_model=List[Dict[str, Any]])
 def get_investigation_candidates(inv_id: str):
     return [
         {
@@ -103,7 +135,7 @@ def get_investigation_candidates(inv_id: str):
         }
     ]
 
-@router.get("/{inv_id}/candidates/{entity_id}", response_model=Dict[str, Any])
+@router.get("/investigations/{inv_id}/candidates/{entity_id}", response_model=Dict[str, Any])
 def get_candidate_detail(inv_id: str, entity_id: str):
     return {
         "entityName": entity_id,
@@ -117,7 +149,7 @@ def get_candidate_detail(inv_id: str, entity_id: str):
         ]
     }
 
-@router.get("/{inv_id}/graph/{entity_id}", response_model=Dict[str, Any])
+@router.get("/investigations/{inv_id}/graph/{entity_id}", response_model=Dict[str, Any])
 def get_candidate_graph(inv_id: str, entity_id: str):
     res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
     return {"entity": entity_id, "nodes": res.extractedEntities, "links": res.correlationLinks}
@@ -164,6 +196,6 @@ def get_deep_candidate_report(inv_id: str, entity_id: str):
     }
 
 # Compatibility alias for demo endpoint
-@router.post("/demo", response_model=InvestigationResponse)
+@router.post("/investigation/demo", response_model=InvestigationResponse)
 def run_demo_investigation():
     return run_investigation_pipeline()
