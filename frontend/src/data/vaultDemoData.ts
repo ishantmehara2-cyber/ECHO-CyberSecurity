@@ -4,8 +4,56 @@ import {
   GraphNode,
   GraphEdge,
   TimelineEvent,
-  AttackDnaItem
+  AttackDnaItem,
+  SiloSlotConfig
 } from '../types/vault';
+
+export const SILO_SLOT_CONFIGS: SiloSlotConfig[] = [
+  {
+    key: 'identity',
+    title: 'IDENTITY & AUTHENTICATION',
+    description: 'Login events, authentication attempts, user identities and session activity.',
+    iconName: 'Lock',
+    uploadLabel: 'UPLOAD AUTHENTICATION EVIDENCE',
+    expectedFileName: '01_RAW_AUTHENTICATION_TELEMETRY.pdf',
+    emptyStatusText: 'WAITING FOR IDENTITY DATA',
+    classification: 'authentication',
+    sourceName: 'Identity Gateway'
+  },
+  {
+    key: 'network',
+    title: 'NETWORK TELEMETRY',
+    description: 'Network flows, external connections, domains and data transfer activity.',
+    iconName: 'Globe',
+    uploadLabel: 'UPLOAD NETWORK EVIDENCE',
+    expectedFileName: '02_RAW_NETWORK_TELEMETRY.pdf',
+    emptyStatusText: 'WAITING FOR NETWORK DATA',
+    classification: 'network',
+    sourceName: 'Network Sensor'
+  },
+  {
+    key: 'threat_intel',
+    title: 'THREAT INTELLIGENCE',
+    description: 'Indicator context, reputation signals and known relationship information.',
+    iconName: 'ShieldAlert',
+    uploadLabel: 'UPLOAD INTELLIGENCE EVIDENCE',
+    expectedFileName: '03_RAW_THREAT_INTELLIGENCE_FEED.pdf',
+    emptyStatusText: 'WAITING FOR INTELLIGENCE DATA',
+    classification: 'threat_intel',
+    sourceName: 'Intelligence Source'
+  },
+  {
+    key: 'endpoint',
+    title: 'ENDPOINT & SYSTEM',
+    description: 'Processes, files, endpoint activity and system-level telemetry.',
+    iconName: 'Monitor',
+    uploadLabel: 'UPLOAD ENDPOINT EVIDENCE',
+    expectedFileName: '04_RAW_ENDPOINT_SYSTEM_TELEMETRY.pdf',
+    emptyStatusText: 'WAITING FOR ENDPOINT DATA',
+    classification: 'endpoint',
+    sourceName: 'Endpoint Sensor'
+  }
+];
 
 export const OFFICIAL_DEMO_FILES: UploadedEvidenceFile[] = [
   {
@@ -15,6 +63,7 @@ export const OFFICIAL_DEMO_FILES: UploadedEvidenceFile[] = [
     status: 'ready',
     classification: 'authentication',
     sourceName: 'Identity Gateway',
+    siloSlotKey: 'identity',
     isOfficialDemoFile: true
   },
   {
@@ -24,6 +73,7 @@ export const OFFICIAL_DEMO_FILES: UploadedEvidenceFile[] = [
     status: 'ready',
     classification: 'network',
     sourceName: 'Network Sensor',
+    siloSlotKey: 'network',
     isOfficialDemoFile: true
   },
   {
@@ -33,6 +83,7 @@ export const OFFICIAL_DEMO_FILES: UploadedEvidenceFile[] = [
     status: 'ready',
     classification: 'threat_intel',
     sourceName: 'Intelligence Source',
+    siloSlotKey: 'threat_intel',
     isOfficialDemoFile: true
   },
   {
@@ -42,6 +93,7 @@ export const OFFICIAL_DEMO_FILES: UploadedEvidenceFile[] = [
     status: 'ready',
     classification: 'endpoint',
     sourceName: 'Endpoint Sensor',
+    siloSlotKey: 'endpoint',
     isOfficialDemoFile: true
   }
 ];

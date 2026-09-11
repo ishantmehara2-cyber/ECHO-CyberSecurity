@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { VaultHeader } from '../components/Vault/VaultHeader';
-import { EvidenceUploadArea } from '../components/Vault/EvidenceUploadArea';
+import { SiloDataDiagram } from '../components/Vault/SiloDataDiagram';
+import { DedicatedSilosGrid } from '../components/Vault/DedicatedSilosGrid';
+import { PreInvestigationSummary } from '../components/Vault/PreInvestigationSummary';
 import { InvestigationProgressTracker } from '../components/Vault/InvestigationProgressTracker';
 import { StageIngestion } from '../components/Vault/StageIngestion';
 import { StageEntityExtraction } from '../components/Vault/StageEntityExtraction';
@@ -8,105 +10,179 @@ import { StageCorrelationGraph } from '../components/Vault/StageCorrelationGraph
 import { StageIncidentTimeline } from '../components/Vault/StageIncidentTimeline';
 import { StageWowMoment } from '../components/Vault/StageWowMoment';
 import { InvestigationReportModal } from '../components/Vault/InvestigationReportModal';
-import { OFFICIAL_DEMO_FILES } from '../data/vaultDemoData';
-import { UploadedEvidenceFile, InvestigationStage, EvidenceClassification } from '../types/vault';
+import { ResetConfirmationModal } from '../components/Vault/ResetConfirmationModal';
+import { OFFICIAL_DEMO_FILES, SILO_SLOT_CONFIGS } from '../data/vaultDemoData';
+import {
+  UploadedEvidenceFile,
+  InvestigationStage,
+  SiloSlotKey,
+  EvidenceClassification
+} from '../types/vault';
 
 export const EvidenceVault = () => {
-  const [files, setFiles] = useState<UploadedEvidenceFile[]>(OFFICIAL_DEMO_FILES);
-  const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
-  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  // 4 Silo slots state
+  const [siloFiles, setSiloFiles] = useState<Record<SiloSlotKey, UploadedEvidenceFile | null>>({
+    identity: OFFICIAL_DEMO_FILES[0],
+    network: OFFICIAL_DEMO_FILES[1],
+    threat_intel: OFFICIAL_DEMO_FILES[2],
+    endpoint: OFFICIAL_DEMO_FILES[3]
+  });
 
-  const isAllDemoFilesPresent = OFFICIAL_DEMO_FILES.every((demoFile) =>
-    files.some((f) => f.name.toLowerCase().includes(demoFile.name.toLowerCase().replace('.pdf', '')))
+  const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
+  const [isJudgeDemoMode, setIsJudgeDemoMode] = useState<boolean>(true);
+  const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
+
+  // Flatten active files into list for downstream pipeline stages
+  const activeFileList: UploadedEvidenceFile[] = Object.values(siloFiles).filter(Boolean) as UploadedEvidenceFile[];
+
+  const isAllDemoFilesPresent = OFFICIAL_DEMO_FILES.every((demo) =>
+    activeFileList.some((f) => f.name.toLowerCase().includes(demo.name.toLowerCase().replace('.pdf', '')))
   );
 
   const handleLoadDemoFiles = () => {
-    setFiles(OFFICIAL_DEMO_FILES);
+    setSiloFiles({
+      identity: OFFICIAL_DEMO_FILES[0],
+      network: OFFICIAL_DEMO_FILES[1],
+      threat_intel: OFFICIAL_DEMO_FILES[2],
+      endpoint: OFFICIAL_DEMO_FILES[3]
+    });
     setCurrentStage('idle');
   };
 
-  const handleFileUpload = (newFiles: File[]) => {
-    const processedFiles: UploadedEvidenceFile[] = newFiles.map((file) => {
-      const lowerName = file.name.toLowerCase();
-      let classification: EvidenceClassification = 'unclassified';
-      let sourceName = 'Unclassified Evidence';
+  const handleUploadToSlot = (slotKey: SiloSlotKey, uploadedFiles: File[]) => {
+    if (uploadedFiles.length === 0) return;
+    const file = uploadedFiles[0];
+    const lowerName = file.name.toLowerCase();
 
-      if (lowerName.includes('auth')) {
-        classification = 'authentication';
-        sourceName = 'Identity Gateway';
-      } else if (lowerName.includes('net')) {
-        classification = 'network';
-        sourceName = 'Network Sensor';
-      } else if (lowerName.includes('threat') || lowerName.includes('intel')) {
-        classification = 'threat_intel';
-        sourceName = 'Intelligence Source';
-      } else if (lowerName.includes('endpoint') || lowerName.includes('system')) {
-        classification = 'endpoint';
-        sourceName = 'Endpoint Sensor';
-      }
+    const config = SILO_SLOT_CONFIGS.find((c) => c.key === slotKey);
+    let classification: EvidenceClassification = config?.classification || 'unclassified';
+    let sourceName = config?.sourceName || 'Unclassified Evidence';
+    let warningMismatch: string | undefined = undefined;
+    let suggestedSlotKey: SiloSlotKey | undefined = undefined;
 
-      return {
-        id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-        name: file.name,
-        size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
-        status: 'ready',
-        classification,
-        sourceName,
-        fileObject: file,
-        isOfficialDemoFile: false
-      };
-    });
-
-    setFiles((prev) => [...prev, ...processedFiles]);
-  };
-
-  const handleRemoveFile = (id: string) => {
-    setFiles((prev) => prev.filter((f) => f.id !== id));
-    if (files.length <= 1) {
-      setCurrentStage('idle');
+    // Source mismatch detection
+    if (lowerName.includes('net') && slotKey !== 'network') {
+      warningMismatch = `Network telemetry evidence appears to have been uploaded to the ${config?.title} slot. Correlation classification may be affected.`;
+      suggestedSlotKey = 'network';
+    } else if (lowerName.includes('auth') && slotKey !== 'identity') {
+      warningMismatch = `Authentication evidence appears to have been uploaded to the ${config?.title} slot. Correlation classification may be affected.`;
+      suggestedSlotKey = 'identity';
+    } else if ((lowerName.includes('threat') || lowerName.includes('intel')) && slotKey !== 'threat_intel') {
+      warningMismatch = `Threat intelligence feed appears to have been uploaded to the ${config?.title} slot. Correlation classification may be affected.`;
+      suggestedSlotKey = 'threat_intel';
+    } else if ((lowerName.includes('endpoint') || lowerName.includes('system')) && slotKey !== 'endpoint') {
+      warningMismatch = `Endpoint telemetry appears to have been uploaded to the ${config?.title} slot. Correlation classification may be affected.`;
+      suggestedSlotKey = 'endpoint';
     }
+
+    const processedFile: UploadedEvidenceFile = {
+      id: `file-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+      name: file.name,
+      size: `${(file.size / (1024 * 1024)).toFixed(1)} MB`,
+      status: 'ready',
+      classification,
+      sourceName,
+      siloSlotKey: slotKey,
+      fileObject: file,
+      isOfficialDemoFile: false,
+      warningMismatch,
+      suggestedSlotKey
+    };
+
+    setSiloFiles((prev) => ({
+      ...prev,
+      [slotKey]: processedFile
+    }));
   };
 
-  const handleClearAll = () => {
-    setFiles([]);
+  const handleRemoveFromSlot = (slotKey: SiloSlotKey) => {
+    setSiloFiles((prev) => ({
+      ...prev,
+      [slotKey]: null
+    }));
+  };
+
+  const handleMoveSlot = (fromSlotKey: SiloSlotKey, targetSlotKey: SiloSlotKey) => {
+    const fileToMove = siloFiles[fromSlotKey];
+    if (!fileToMove) return;
+
+    const targetConfig = SILO_SLOT_CONFIGS.find((c) => c.key === targetSlotKey);
+
+    const updatedFile: UploadedEvidenceFile = {
+      ...fileToMove,
+      siloSlotKey: targetSlotKey,
+      classification: targetConfig?.classification || fileToMove.classification,
+      sourceName: targetConfig?.sourceName || fileToMove.sourceName,
+      warningMismatch: undefined,
+      suggestedSlotKey: undefined
+    };
+
+    setSiloFiles((prev) => ({
+      ...prev,
+      [fromSlotKey]: null,
+      [targetSlotKey]: updatedFile
+    }));
+  };
+
+  const handleConfirmReset = () => {
+    setSiloFiles({
+      identity: null,
+      network: null,
+      threat_intel: null,
+      endpoint: null
+    });
     setCurrentStage('idle');
   };
 
   const handleStartInvestigation = () => {
-    if (files.length > 0) {
+    if (activeFileList.length > 0) {
       setCurrentStage('ingestion');
     }
   };
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* Vault Header */}
+      {/* 1. Header */}
       <VaultHeader
         onLoadDemoFiles={handleLoadDemoFiles}
-        fileCount={files.length}
-        isDemoMode={isAllDemoFilesPresent}
+        onOpenResetModal={() => setIsResetModalOpen(true)}
+        fileCount={activeFileList.length}
+        isJudgeDemoMode={isJudgeDemoMode}
+        onToggleJudgeDemoMode={() => setIsJudgeDemoMode(!isJudgeDemoMode)}
       />
 
-      {/* Persistent Investigation Progress Bar when active */}
+      {/* Persistent Progress Tracker when active */}
       {currentStage !== 'idle' && (
         <InvestigationProgressTracker currentStage={currentStage} />
       )}
 
-      {/* STAGE CONTROLLER */}
+      {/* IDLE INPUT EXPERIENCE */}
       {currentStage === 'idle' && (
-        <EvidenceUploadArea
-          files={files}
-          onFileUpload={handleFileUpload}
-          onRemoveFile={handleRemoveFile}
-          onClearAll={handleClearAll}
-          onStartInvestigation={handleStartInvestigation}
-          isAllDemoFilesPresent={isAllDemoFilesPresent}
-        />
+        <div className="space-y-6">
+          {/* Visual Silos Pathway Diagram */}
+          <SiloDataDiagram siloFiles={siloFiles} />
+
+          {/* 4 Dedicated Upload Cards Grid */}
+          <DedicatedSilosGrid
+            siloFiles={siloFiles}
+            onUploadToSlot={handleUploadToSlot}
+            onRemoveFromSlot={handleRemoveFromSlot}
+            onMoveSlot={handleMoveSlot}
+          />
+
+          {/* Pre-Investigation Checklist & Action Bar */}
+          <PreInvestigationSummary
+            siloFiles={siloFiles}
+            onStartInvestigation={handleStartInvestigation}
+          />
+        </div>
       )}
 
+      {/* PIPELINE STAGES */}
       {currentStage === 'ingestion' && (
         <StageIngestion
-          files={files}
+          files={activeFileList}
           onCompleteStage={() => setCurrentStage('extraction')}
         />
       )}
@@ -136,10 +212,17 @@ export const EvidenceVault = () => {
         />
       )}
 
-      {/* Investigation Report Modal */}
+      {/* Report Summary Modal */}
       <InvestigationReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
+      />
+
+      {/* Reset Confirmation Modal */}
+      <ResetConfirmationModal
+        isOpen={isResetModalOpen}
+        onClose={() => setIsResetModalOpen(false)}
+        onConfirmReset={handleConfirmReset}
       />
     </div>
   );

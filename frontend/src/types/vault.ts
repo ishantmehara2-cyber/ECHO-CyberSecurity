@@ -5,6 +5,20 @@ export type EvidenceClassification =
   | 'endpoint'
   | 'unclassified';
 
+export type SiloSlotKey = 'identity' | 'network' | 'threat_intel' | 'endpoint';
+
+export interface SiloSlotConfig {
+  key: SiloSlotKey;
+  title: string;
+  description: string;
+  iconName: string;
+  uploadLabel: string;
+  expectedFileName: string;
+  emptyStatusText: string;
+  classification: EvidenceClassification;
+  sourceName: string;
+}
+
 export interface UploadedEvidenceFile {
   id: string;
   name: string;
@@ -12,8 +26,11 @@ export interface UploadedEvidenceFile {
   status: 'ready' | 'processing' | 'completed';
   classification: EvidenceClassification;
   sourceName: string;
+  siloSlotKey?: SiloSlotKey;
   fileObject?: File;
   isOfficialDemoFile?: boolean;
+  warningMismatch?: string;
+  suggestedSlotKey?: SiloSlotKey;
 }
 
 export type InvestigationStage =
@@ -41,7 +58,7 @@ export interface GraphNode {
   id: string;
   label: string;
   type: 'ip' | 'identity' | 'endpoint' | 'session' | 'file' | 'domain';
-  x: number; // percentage coordinate for visual graph
+  x: number;
   y: number;
   highlighted?: boolean;
   firstSeen?: string;
