@@ -28,14 +28,14 @@ export const AskEchoSearch = () => {
   const events = analysisData?.normalized_events || [];
   const gaps = analysisData?.evidence_gaps || [];
 
-  const topCandidate = candidates[0]?.entityName || entities[0]?.name || 'employee_07';
-  const topHost = candidates[0]?.keyActors?.primaryHost || 'WORKSTATION-07';
+  const topCandidate = candidates[0]?.entityName || entities[0]?.name || '';
+  const topHost = candidates[0]?.keyActors?.primaryHost || '';
 
   const PRESET_QUERIES = [
-    `Show suspicious activity for ${topCandidate}`,
+    ...(topCandidate ? [`Show suspicious activity for ${topCandidate}`] : []),
     'Why are these events connected?',
     'What evidence is missing?',
-    `Show activity on ${topHost}`,
+    ...(topHost ? [`Show activity on ${topHost}`] : []),
     'What happened before exfiltration?',
     'Which candidates accessed restricted assets?'
   ];
@@ -47,17 +47,18 @@ export const AskEchoSearch = () => {
     // 1. Search for specific entity / candidate
     const matchingCandidate = candidates.find(c => c.entityName.toLowerCase().includes(q) || q.includes(c.entityName.toLowerCase()));
     const matchingEntity = entities.find(e => e.name.toLowerCase().includes(q) || q.includes(e.name.toLowerCase()));
-    const targetName = matchingCandidate?.entityName || matchingEntity?.name || topCandidate;
+    const targetName = matchingCandidate?.entityName || matchingEntity?.name;
 
     const matchingEvts = events.filter(e =>
-      (e.entity_user && e.entity_user.toLowerCase().includes(targetName.toLowerCase())) ||
-      (e.entity_host && e.entity_host.toLowerCase().includes(targetName.toLowerCase())) ||
-      (e.description && e.description.toLowerCase().includes(targetName.toLowerCase()))
+      !targetName ||
+      [e.entity_user, e.entity_host, e.entity_ip, e.entity_domain, e.entity_asset, e.description, e.eventType]
+        .filter(Boolean)
+        .some((value: string) => value.toLowerCase().includes(targetName.toLowerCase()))
     );
 
-    const displayEvts = (matchingEvts.length > 0 ? matchingEvts : events).slice(0, 5).map(e => ({
-      time: e.timestamp || '10:30',
-      source: e.source || 'Telemetry',
+    const displayEvts = (matchingEvts.length > 0 ? matchingEvts : []).slice(0, 5).map(e => ({
+      time: e.timestamp || 'Observed',
+      source: e.source || 'Unknown source',
       description: e.description || e.eventType || 'Security Event'
     }));
 
@@ -68,26 +69,32 @@ export const AskEchoSearch = () => {
         matchedTopic: 'Evidence Gap Analysis',
         summary: firstGap
           ? `ECHO identified 1 evidence gap: ${firstGap.expectedStage} (${firstGap.timeWindow || 'Time window'}).`
-          : 'No critical evidence gaps detected in available telemetry.',
+          : 'No evidence gaps were identified in the current investigation.',
         supportingEvents: displayEvts,
-        correlationReasoning: firstGap?.whyFlagged || 'Telemetry sources were correlated across available events.',
+        correlationReasoning: firstGap?.whyFlagged || 'No additional evidence gap explanation is available.',
         missingEvidenceNote: firstGap ? `RECOMMENDED ACTION: ${firstGap.recommendedSource}` : undefined
       });
     } else if (q.includes('why') || q.includes('connected')) {
       setActiveResult({
         query: queryText,
         matchedTopic: 'Correlation Rules & Evidence Factors',
-        summary: `Events for ${targetName} were connected through ECHO deterministic heuristics: Shared User Principal, Shared Host, and Temporal Proximity.`,
+        summary: targetName
+          ? `Events associated with ${targetName} were connected using the matching factors recorded by the current analysis.`
+          : 'The current analysis did not identify a specific detected entity in that question.',
         supportingEvents: displayEvts,
-        correlationReasoning: `Correlation confidence is ${analysisData?.confidence?.overallScore || 94}% based on matching evidence factors across active telemetry sources.`
+        correlationReasoning: matchingCandidate
+          ? `Correlation confidence for ${matchingCandidate.entityName} is ${matchingCandidate.correlationConfidence}% based on actual correlation links.`
+          : 'Select or mention a detected entity to inspect its actual correlation evidence.'
       });
     } else {
       setActiveResult({
         query: queryText,
-        matchedTopic: `Entity Activity: ${targetName}`,
-        summary: `ECHO analyzed ${events.length || 4} normalized events for ${targetName}. Activity includes correlated events across ${entities.length || 2} extracted security entities.`,
+        matchedTopic: targetName ? `Entity Activity: ${targetName}` : 'Current Investigation Search',
+        summary: targetName
+          ? `ECHO found ${matchingEvts.length} current telemetry event(s) associated with ${targetName}.`
+          : `ECHO searched ${events.length} current normalized event(s) and ${entities.length} detected entities.`,
         supportingEvents: displayEvts,
-        correlationReasoning: `Connected because session and device anchors bound activity for ${targetName} across telemetry streams.`
+        correlationReasoning: matchingCandidate?.primaryReason || 'No specific entity match was found for this query.'
       });
     }
   };
@@ -104,7 +111,7 @@ export const AskEchoSearch = () => {
         </div>
 
         <span className="text-[10px] px-2.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800 font-bold uppercase">
-          {hasAnalysisData ? 'ACTIVE DATASET QUERY' : 'DEMO QUERY MODE'}
+          {hasAnalysisData ? 'ACTIVE DATASET QUERY' : 'NO INVESTIGATION DATA'}
         </span>
       </div>
 

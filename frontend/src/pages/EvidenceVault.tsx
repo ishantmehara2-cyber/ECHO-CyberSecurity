@@ -23,7 +23,7 @@ import {
 import { InvestigationCandidate } from '../types/candidates';
 import { analyzeFiles, analyzeDemoFiles } from '../services/investigationService';
 import { useInvestigation } from '../context/InvestigationContext';
-import { AlertCircle, RefreshCw } from 'lucide-react';
+import { AlertCircle, RefreshCw, ArrowLeft } from 'lucide-react';
 
 export const EvidenceVault = () => {
   const {
@@ -192,8 +192,21 @@ export const EvidenceVault = () => {
     setCurrentStage('correlation');
   };
 
+  // Previous stage navigation without losing files
+  const getPreviousStage = (stage: InvestigationStage): InvestigationStage => {
+    switch (stage) {
+      case 'reconstruction': return 'timeline';
+      case 'timeline': return 'correlation';
+      case 'correlation': return 'discovery';
+      case 'discovery': return 'extraction';
+      case 'extraction': return 'ingestion';
+      case 'ingestion': return 'idle';
+      default: return 'idle';
+    }
+  };
+
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-sans">
       {/* 1. Header with Mode Selector */}
       <VaultHeader
         investigationMode={investigationMode}
@@ -235,9 +248,33 @@ export const EvidenceVault = () => {
         </div>
       )}
 
+      {/* Back to Evidence Uploads / Previous Stage Bar when active */}
+      {currentStage !== 'idle' && (
+        <div className="flex items-center justify-between font-mono text-xs">
+          <button
+            onClick={() => setCurrentStage('idle')}
+            className="flex items-center gap-2 px-3 py-1.5 bg-dark-800 hover:bg-dark-700 text-cyan-400 border border-dark-700 rounded-lg font-bold transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-4 h-4" />
+            <span>← Return to Evidence Uploads ({activeFileList.length} files preserved)</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentStage(getPreviousStage(currentStage))}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-dark-800 hover:bg-dark-700 text-slate-300 border border-dark-700 rounded-lg font-bold transition-all cursor-pointer"
+          >
+            <ArrowLeft className="w-3.5 h-3.5" />
+            <span>Previous Step</span>
+          </button>
+        </div>
+      )}
+
       {/* Persistent Progress Tracker when active */}
       {currentStage !== 'idle' && (
-        <InvestigationProgressTracker currentStage={currentStage} />
+        <InvestigationProgressTracker
+          currentStage={currentStage}
+          onSelectStage={(stage) => setCurrentStage(stage)}
+        />
       )}
 
       {/* IDLE INPUT EXPERIENCE */}

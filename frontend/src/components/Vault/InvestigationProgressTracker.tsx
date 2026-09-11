@@ -3,25 +3,28 @@ import { InvestigationStage } from '../../types/vault';
 
 interface InvestigationProgressTrackerProps {
   currentStage: InvestigationStage;
+  onSelectStage?: (stage: InvestigationStage) => void;
 }
 
-export const InvestigationProgressTracker = ({ currentStage }: InvestigationProgressTrackerProps) => {
-  const stages = [
+export const InvestigationProgressTracker = ({ currentStage, onSelectStage }: InvestigationProgressTrackerProps) => {
+  const stages: { key: InvestigationStage; label: string }[] = [
     { key: 'ingestion', label: 'DOCUMENTS INGESTED' },
     { key: 'extraction', label: 'ENTITIES EXTRACTED' },
+    { key: 'discovery', label: 'CANDIDATE DISCOVERY' },
     { key: 'correlation', label: 'CORRELATION GRAPH' },
     { key: 'timeline', label: 'INCIDENT TIMELINE' },
-    { key: 'reconstruction', label: 'ATTACK DNA RECONSTRUCTION' },
+    { key: 'reconstruction', label: 'ATTACK RECONSTRUCTION' },
   ];
 
   const getStageIndex = (stageKey: string): number => {
     switch (stageKey) {
       case 'ingestion': return 1;
       case 'extraction': return 2;
-      case 'correlation': return 3;
-      case 'timeline': return 4;
+      case 'discovery': return 3;
+      case 'correlation': return 4;
+      case 'timeline': return 5;
       case 'reconstruction':
-      case 'complete': return 5;
+      case 'complete': return 6;
       default: return 0;
     }
   };
@@ -29,33 +32,41 @@ export const InvestigationProgressTracker = ({ currentStage }: InvestigationProg
   const currentIndex = getStageIndex(currentStage);
 
   return (
-    <div className="bg-dark-800 border border-cyan-800/80 rounded-xl p-4 shadow-xl mb-6">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 border-b border-dark-700/80 pb-2">
+    <div className="bg-dark-800 border border-cyan-800/80 rounded-xl p-4 shadow-xl mb-6 font-sans">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 border-b border-dark-700/80 pb-2 font-mono">
         <div className="flex items-center gap-2">
           <Activity className="w-4 h-4 text-cyan-400" />
-          <span className="text-xs font-mono font-bold text-slate-100 uppercase tracking-wider">
+          <span className="text-xs font-bold text-slate-100 uppercase tracking-wider">
             INVESTIGATION PROGRESS STATUS
           </span>
         </div>
 
-        <div className="text-xs font-mono text-cyan-400 font-bold flex items-center gap-2">
+        <div className="text-xs text-cyan-400 font-bold flex items-center gap-2">
           <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
           <span>
-            {currentStage === 'complete' ? 'INVESTIGATION COMPLETE' : `STAGE ${currentIndex} OF 5 IN PROGRESS`}
+            {currentStage === 'complete' ? 'INVESTIGATION COMPLETE' : `STAGE ${currentIndex} OF 6 IN PROGRESS`}
           </span>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-2 text-xs font-mono">
+      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 text-xs font-mono">
         {stages.map((st, idx) => {
           const stageNum = idx + 1;
           const isDone = currentIndex > stageNum || currentStage === 'complete';
           const isCurrent = currentIndex === stageNum && currentStage !== 'complete';
 
           return (
-            <div
+            <button
               key={st.key}
-              className={`p-2.5 rounded-lg border transition-all flex items-center gap-2 ${
+              onClick={() => {
+                if (onSelectStage && (isDone || isCurrent)) {
+                  onSelectStage(st.key);
+                }
+              }}
+              disabled={!isDone && !isCurrent}
+              className={`p-2.5 rounded-lg border transition-all flex items-center gap-2 text-left ${
+                isDone || isCurrent ? 'cursor-pointer hover:scale-[1.02]' : 'cursor-not-allowed opacity-50'
+              } ${
                 isDone
                   ? 'bg-emerald-950/60 border-emerald-800 text-emerald-400 font-bold'
                   : isCurrent
@@ -74,7 +85,7 @@ export const InvestigationProgressTracker = ({ currentStage }: InvestigationProg
               )}
 
               <span className="text-[11px] truncate tracking-tight">{st.label}</span>
-            </div>
+            </button>
           );
         })}
       </div>

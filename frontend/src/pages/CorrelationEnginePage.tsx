@@ -14,6 +14,7 @@ import {
 import { EmptyInvestigationState } from '../components/Common/EmptyInvestigationState';
 import { InteractiveCorrelationGraph } from '../components/Correlation/InteractiveCorrelationGraph';
 import { InvestigationStoryNarrative } from '../components/Correlation/InvestigationStoryNarrative';
+import { AskEchoSearch } from '../components/Search/AskEchoSearch';
 import { useInvestigation } from '../context/InvestigationContext';
 import { InvestigationCandidate } from '../types/candidates';
 
@@ -98,7 +99,7 @@ export const CorrelationEnginePage = () => {
 
   if (!hasAnalysisData) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-sans">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
         <PageHeader />
         <EmptyInvestigationState
           moduleTitle="Correlation Graph Engine"
@@ -111,6 +112,7 @@ export const CorrelationEnginePage = () => {
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-sans">
       <PageHeader />
+      <AskEchoSearch />
 
       {/* Primary Interactive Correlation Graph Component */}
       <InteractiveCorrelationGraph
@@ -123,7 +125,7 @@ export const CorrelationEnginePage = () => {
 
       {/* Candidate Entity Focus Selector */}
       {candidates.length > 0 && (
-        <section className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-4 shadow-xl font-sans">
+        <section className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-4 shadow-xl">
           <div className="flex items-center justify-between border-b border-dark-700 pb-3 font-mono">
             <div>
               <h2 className="text-sm font-bold text-slate-100 uppercase tracking-wider">
