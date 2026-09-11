@@ -1,8 +1,10 @@
 import {
   FileText,
-  ShieldCheck
+  ShieldCheck,
+  AlertTriangle
 } from 'lucide-react';
 import { INVESTIGATION_SUMMARY_STORY } from '../../data/correlationEngine';
+import { DETECTED_EVIDENCE_GAPS } from '../../data/gapDetectionEngine';
 
 export const InvestigationStoryNarrative = () => {
   const story = INVESTIGATION_SUMMARY_STORY;
@@ -44,13 +46,13 @@ export const InvestigationStoryNarrative = () => {
           </div>
 
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
-            <span className="text-slate-500 text-[10px] block uppercase font-bold">HIGH CONFIDENCE</span>
-            <span className="text-emerald-400 font-bold text-sm">{story.highConfidenceCount} / {story.evidenceConnectionsCount}</span>
+            <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE GAPS</span>
+            <span className="text-amber-400 font-bold text-sm">{DETECTED_EVIDENCE_GAPS.length} Detected</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
-            <span className="text-slate-500 text-[10px] block uppercase font-bold">ATTACK STAGES</span>
-            <span className="text-amber-400 font-bold text-sm">{story.attackStagesCount} Stages</span>
+            <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE COVERAGE</span>
+            <span className="text-emerald-400 font-bold text-sm">78% Complete</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-cyan-800 rounded-lg">
@@ -68,6 +70,20 @@ export const InvestigationStoryNarrative = () => {
           <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
             {story.narrativeText}
           </p>
+        </div>
+
+        {/* EVIDENCE GAPS & NEXT STEP RECOMMENDATION */}
+        <div className="p-4 bg-amber-950/30 border border-amber-800/80 rounded-xl space-y-2 text-xs font-mono">
+          <div className="flex items-center gap-2 text-amber-400 font-bold">
+            <AlertTriangle className="w-4 h-4" />
+            <span>EVIDENCE GAPS & RECOMMENDED NEXT STEPS</span>
+          </div>
+          <p className="text-slate-300 font-sans leading-snug">
+            <strong>HIGH PRIORITY:</strong> Missing endpoint execution telemetry between successful authentication (10:30) and sensitive data access (10:32) on WORKSTATION-07.
+          </p>
+          <div className="text-emerald-400 font-bold font-mono text-[11px] pt-1">
+            RECOMMENDED NEXT STEP: Ingest Endpoint / EDR telemetry (Sysmon / Windows Event 4688) for WORKSTATION-07 during the 10:30-10:32 time window.
+          </div>
         </div>
 
         {/* Key Actor Map Grid */}
