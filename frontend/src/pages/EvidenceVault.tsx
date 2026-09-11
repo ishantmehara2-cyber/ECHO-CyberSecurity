@@ -24,6 +24,9 @@ import {
 import { InvestigationCandidate } from '../types/candidates';
 
 export const EvidenceVault = () => {
+  // Mode selection state: 'demo' vs 'lab'
+  const [investigationMode, setInvestigationMode] = useState<'demo' | 'lab'>('demo');
+
   // 4 Silo slots state
   const [siloFiles, setSiloFiles] = useState<Record<SiloSlotKey, UploadedEvidenceFile | null>>({
     identity: OFFICIAL_DEMO_FILES[0],
@@ -34,7 +37,6 @@ export const EvidenceVault = () => {
 
   const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
   const [selectedCandidate, setSelectedCandidate] = useState<InvestigationCandidate>(CANDIDATES_DATASET[0]);
-  const [isJudgeDemoMode, setIsJudgeDemoMode] = useState<boolean>(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isCandidateReportOpen, setIsCandidateReportOpen] = useState<boolean>(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
@@ -53,6 +55,7 @@ export const EvidenceVault = () => {
       threat_intel: OFFICIAL_DEMO_FILES[2],
       endpoint: OFFICIAL_DEMO_FILES[3]
     });
+    setInvestigationMode('demo');
     setCurrentStage('idle');
   };
 
@@ -154,13 +157,13 @@ export const EvidenceVault = () => {
 
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
-      {/* 1. Header */}
+      {/* 1. Header with Mode Selector */}
       <VaultHeader
+        investigationMode={investigationMode}
+        onChangeMode={setInvestigationMode}
         onLoadDemoFiles={handleLoadDemoFiles}
         onOpenResetModal={() => setIsResetModalOpen(true)}
         fileCount={activeFileList.length}
-        isJudgeDemoMode={isJudgeDemoMode}
-        onToggleJudgeDemoMode={() => setIsJudgeDemoMode(!isJudgeDemoMode)}
       />
 
       {/* Persistent Progress Tracker when active */}
@@ -201,7 +204,7 @@ export const EvidenceVault = () => {
       {currentStage === 'extraction' && (
         <StageEntityExtraction
           onCompleteStage={() => setCurrentStage('discovery')}
-          isDemoMode={isAllDemoFilesPresent}
+          isDemoMode={isAllDemoFilesPresent && investigationMode === 'demo'}
         />
       )}
 
