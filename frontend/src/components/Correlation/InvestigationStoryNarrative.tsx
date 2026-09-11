@@ -1,10 +1,10 @@
 import {
-  FileText,
   ShieldCheck,
   AlertTriangle
 } from 'lucide-react';
 import { INVESTIGATION_SUMMARY_STORY } from '../../data/correlationEngine';
 import { DETECTED_EVIDENCE_GAPS } from '../../data/gapDetectionEngine';
+import { TypedInvestigationStory } from './TypedInvestigationStory';
 
 export const InvestigationStoryNarrative = () => {
   const story = INVESTIGATION_SUMMARY_STORY;
@@ -61,16 +61,8 @@ export const InvestigationStoryNarrative = () => {
           </div>
         </div>
 
-        {/* Narrative Box */}
-        <div className="p-5 bg-dark-900 border border-dark-700 rounded-xl space-y-3">
-          <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-            <FileText className="w-4 h-4 text-cyan-400" />
-            ANALYST INVESTIGATION STORY
-          </h3>
-          <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-            {story.narrativeText}
-          </p>
-        </div>
+        {/* ChatGPT-Style Typed Narrative Component */}
+        <TypedInvestigationStory customText={story.narrativeText} />
 
         {/* EVIDENCE GAPS & NEXT STEP RECOMMENDATION */}
         <div className="p-4 bg-amber-950/30 border border-amber-800/80 rounded-xl space-y-2 text-xs font-mono">

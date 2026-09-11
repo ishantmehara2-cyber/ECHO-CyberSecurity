@@ -225,7 +225,7 @@ export const INVESTIGATION_SUMMARY_STORY: InvestigationSummaryStory = {
   highConfidenceCount: 6,
   attackStagesCount: 6,
   overallConfidenceScore: 94,
-  narrativeText: `ECHO identified a multi-stage cyberattack sequence connecting four independent security telemetry sources. The sequence initiated with brute-force authentication attempts against employee_07 from Tor exit node IP 185.220.101.45, resulting in a valid SSO session on WORKSTATION-07. Following authentication, an encoded PowerShell command executed on WORKSTATION-07, accessing restricted asset finance_records.xlsx. The data was packaged into local staging archive review_package.zip and exfiltrated to external drop domain sync-archive.example.test (198.51.100.77) via a 148 MB egress transfer.`,
+  narrativeText: `ECHO found a suspicious sequence of activity involving employee_07. The activity started with repeated failed login attempts from an external IP address (185.220.101.45). Shortly after a successful login, unusual commands were executed on WORKSTATION-07. The same session then accessed the finance_records.xlsx file and transferred data to an external destination (sync-archive.example.test). Based on the timing, user account, device activity and network connection, ECHO connected these events as part of one possible attack sequence.`,
   keyActors: {
     primaryUser: 'employee_07',
     primaryHost: 'WORKSTATION-07',

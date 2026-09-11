@@ -1,6 +1,7 @@
-import { ShieldCheck, Sparkles, HelpCircle, FileCheck } from 'lucide-react';
+import { ShieldCheck, HelpCircle, FileCheck } from 'lucide-react';
 import { INVESTIGATION_SUMMARY_STORY } from '../../data/correlationEngine';
 import { COVERAGE_SUMMARY_METRICS } from '../../data/gapDetectionEngine';
+import { TypedInvestigationStory } from '../Correlation/TypedInvestigationStory';
 
 interface ExecutiveOverviewProps {
   onOpenReportModal?: () => void;
@@ -67,16 +68,8 @@ export const ExecutiveOverview = ({ onOpenReportModal }: ExecutiveOverviewProps)
           </div>
         </div>
 
-        {/* ATTACK STORY BOX */}
-        <div className="bg-dark-900 border border-dark-700 rounded-xl p-5 space-y-3">
-          <h2 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            RECONSTRUCTED ATTACK STORY
-          </h2>
-          <p className="text-xs sm:text-sm text-slate-200 font-sans leading-relaxed">
-            Suspicious authentication activity was detected from an external Tor exit node IP targeting <strong className="text-purple-300 font-mono">employee_07</strong>. Following logon, activity shifted to endpoint <strong className="text-blue-300 font-mono">WORKSTATION-07</strong> where encoded PowerShell was executed to access restricted spreadsheet <strong className="text-amber-300 font-mono">finance_records.xlsx</strong>. The data was packaged into local container <strong className="text-cyan-300 font-mono">review_package.zip</strong> and transmitted out of the network to destination <strong className="text-emerald-300 font-mono">sync-archive.example.test</strong>.
-          </p>
-        </div>
+        {/* Typed Investigation Story Box */}
+        <TypedInvestigationStory customText={story.narrativeText} />
 
         {/* WHY THIS MATTERS Callout Banner */}
         <div className="p-4 bg-cyan-950/40 border border-cyan-500/60 rounded-xl text-xs text-slate-300 font-sans flex items-start gap-3">
