@@ -4,7 +4,15 @@ import {
   Sparkles,
   CheckCircle2,
   HelpCircle,
-  ShieldCheck
+  ShieldCheck,
+  RotateCcw,
+  User,
+  Monitor,
+  Globe,
+  Lock,
+  Cpu,
+  FileText,
+  AlertTriangle
 } from 'lucide-react';
 import { GraphNode } from '../../types/vault';
 import { CorrelationLink } from '../../types/correlation';
@@ -14,6 +22,21 @@ import { CORRELATION_LINKS } from '../../data/correlationEngine';
 export const InteractiveCorrelationGraph = () => {
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(DEMO_GRAPH_NODES[0]);
   const [selectedLink, setSelectedLink] = useState<CorrelationLink | null>(CORRELATION_LINKS[0]);
+
+  const handleResetSelection = () => {
+    setSelectedNode(DEMO_GRAPH_NODES[0]);
+    setSelectedLink(CORRELATION_LINKS[0]);
+  };
+
+  const legendItems = [
+    { label: 'User Identity', icon: User, color: 'text-purple-400' },
+    { label: 'Endpoint', icon: Monitor, color: 'text-blue-400' },
+    { label: 'Network IP', icon: Globe, color: 'text-red-400' },
+    { label: 'Auth Session', icon: Lock, color: 'text-cyan-400' },
+    { label: 'Process', icon: Cpu, color: 'text-emerald-400' },
+    { label: 'File Asset', icon: FileText, color: 'text-amber-400' },
+    { label: 'Evidence Gap', icon: AlertTriangle, color: 'text-amber-500' }
+  ];
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl">
@@ -32,9 +55,35 @@ export const InteractiveCorrelationGraph = () => {
           </h2>
         </div>
 
-        <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-800">
-          <ShieldCheck className="w-4 h-4" />
-          <span>OVERALL CLUSTER CONFIDENCE: 94%</span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={handleResetSelection}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-dark-900 hover:bg-dark-700 text-slate-300 border border-dark-700 rounded-lg text-xs font-mono transition-colors cursor-pointer"
+          >
+            <RotateCcw className="w-3.5 h-3.5" />
+            <span>Reset Selection</span>
+          </button>
+
+          <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-800">
+            <ShieldCheck className="w-4 h-4" />
+            <span>CLUSTER CONFIDENCE: 94%</span>
+          </div>
+        </div>
+      </div>
+
+      {/* GRAPH LEGEND BAR */}
+      <div className="p-3 bg-dark-900 border border-dark-700 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
+        <span className="text-slate-500 font-bold uppercase text-[10px]">GRAPH LEGEND:</span>
+        <div className="flex flex-wrap items-center gap-4">
+          {legendItems.map((lg, i) => {
+            const Icon = lg.icon;
+            return (
+              <div key={i} className="flex items-center gap-1.5 text-slate-300 text-[11px]">
+                <Icon className={`w-3.5 h-3.5 ${lg.color}`} />
+                <span>{lg.label}</span>
+              </div>
+            );
+          })}
         </div>
       </div>
 
@@ -196,7 +245,7 @@ export const InteractiveCorrelationGraph = () => {
                 <span className="font-bold text-slate-200">INSPECTED NODE: {selectedNode.label}</span>
                 <span className="text-[10px] uppercase text-cyan-400 font-bold">{selectedNode.type}</span>
               </div>
-              <p className="text-[11px] text-slate-400 font-sans">
+              <p className="text-[11px] text-slate-400 font-sans leading-snug">
                 {selectedNode.details}
               </p>
             </div>
