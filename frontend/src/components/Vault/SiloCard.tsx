@@ -10,7 +10,8 @@ import {
   Globe,
   ShieldAlert,
   Monitor,
-  FileText
+  FileText,
+  FileQuestion
 } from 'lucide-react';
 import { SiloSlotConfig, SiloSlotKey, UploadedEvidenceFile } from '../../types/vault';
 
@@ -116,7 +117,7 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
               ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
               : 'bg-dark-900 text-slate-500 border-dark-700'
           }`}>
-            {file ? '✓ EVIDENCE LOADED' : '○ WAITING FOR DATA'}
+            {file ? '✓ EVIDENCE LOADED' : '○ NO FILE UPLOADED YET'}
           </span>
         </div>
 
@@ -158,8 +159,11 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
             <div className="text-xs font-mono font-bold text-slate-300">
               {config.uploadLabel}
             </div>
+            <div className="text-[10px] font-mono text-cyan-400 font-bold bg-cyan-950/80 px-2 py-0.5 rounded border border-cyan-800/60 flex items-center gap-1">
+              <FileQuestion className="w-3 h-3 text-cyan-400" /> NO FILE UPLOADED YET
+            </div>
             <div className="text-[10px] font-mono text-slate-500">
-              Supports: .PDF .CSV .JSON .JSONL .LOG .TXT .XML
+              Drag & Drop or Click to Upload (.PDF, .CSV, .JSON, .JSONL, .LOG, .TXT, .XML)
             </div>
           </div>
         ) : (
@@ -207,7 +211,7 @@ export const SiloCard = ({ config, file, onUpload, onRemove, onMoveSlot }: SiloC
       <div className="mt-4 pt-3 border-t border-dark-700/60 flex items-center justify-between text-[11px] font-mono">
         <span className="text-slate-500">SILO STATUS:</span>
         <span className={file ? 'text-emerald-400 font-bold' : 'text-slate-500'}>
-          {file ? '● EVIDENCE CONNECTED' : `○ ${config.emptyStatusText}`}
+          {file ? '● EVIDENCE CONNECTED' : `○ NO FILE UPLOADED YET`}
         </span>
       </div>
     </div>

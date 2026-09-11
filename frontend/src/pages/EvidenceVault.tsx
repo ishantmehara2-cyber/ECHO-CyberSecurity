@@ -26,15 +26,15 @@ import { analyzeFiles, BackendAnalysisResult } from '../services/investigationSe
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export const EvidenceVault = () => {
-  // Mode selection state: 'demo' vs 'lab'
-  const [investigationMode, setInvestigationMode] = useState<'demo' | 'lab'>('demo');
+  // Mode selection state: default to 'lab' mode (clean empty upload zone)
+  const [investigationMode, setInvestigationMode] = useState<'demo' | 'lab'>('lab');
 
-  // 4 Silo slots state
+  // 4 Silo slots initialized to empty (null) - NO pre-input hardcoded files
   const [siloFiles, setSiloFiles] = useState<Record<SiloSlotKey, UploadedEvidenceFile | null>>({
-    identity: OFFICIAL_DEMO_FILES[0],
-    network: OFFICIAL_DEMO_FILES[1],
-    threat_intel: OFFICIAL_DEMO_FILES[2],
-    endpoint: OFFICIAL_DEMO_FILES[3]
+    identity: null,
+    network: null,
+    threat_intel: null,
+    endpoint: null
   });
 
   const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
