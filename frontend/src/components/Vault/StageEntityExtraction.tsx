@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import {
   Users,
   Globe,
@@ -16,64 +16,104 @@ import { DEMO_EXTRACTED_ENTITIES } from '../../data/vaultDemoData';
 interface StageEntityExtractionProps {
   onCompleteStage: () => void;
   isDemoMode: boolean;
+  totalParsedRecords?: number;
 }
 
-export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEntityExtractionProps) => {
-  const [eventCount, setEventCount] = useState<number>(0);
+export const StageEntityExtraction = ({
+  onCompleteStage,
+  isDemoMode,
+  totalParsedRecords = 2214
+}: StageEntityExtractionProps) => {
+  const targetEventCount = isDemoMode ? 2214 : (totalParsedRecords || 640);
+  const targetEntities = isDemoMode ? DEMO_EXTRACTED_ENTITIES : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
+
+  const [currentRecord, setCurrentRecord] = useState<number>(0);
   const [pipelinePhase, setPipelinePhase] = useState<string>('READING TELEMETRY');
   const [visibleEntities, setVisibleEntities] = useState<ExtractedEntity[]>([]);
+  const [status, setStatus] = useState<'extracting' | 'complete'>('extracting');
 
-  const targetEntities = isDemoMode ? DEMO_EXTRACTED_ENTITIES : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
-  const targetEventCount = isDemoMode ? 2214 : 640;
+  const hasStartedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Non-uniform natural event scanning counter simulation
-    const intervals = [
-      { threshold: 350, phase: 'READING TELEMETRY', incMin: 40, incMax: 120, delay: 100 },
-      { threshold: 750, phase: 'ENTITY EXTRACTION', incMin: 20, incMax: 80, delay: 150 },
-      { threshold: 1250, phase: 'CROSS-SOURCE CORRELATION', incMin: 50, incMax: 160, delay: 120 },
-      { threshold: 1850, phase: 'TEMPORAL ANALYSIS', incMin: 30, incMax: 90, delay: 140 },
-      { threshold: targetEventCount, phase: 'FINAL RECONSTRUCTION', incMin: 15, incMax: 60, delay: 100 },
+    if (hasStartedRef.current) return;
+    hasStartedRef.current = true;
+
+    // Phases with thresholds
+    const phases = [
+      { threshold: Math.floor(targetEventCount * 0.2), name: 'READING TELEMETRY' },
+      { threshold: Math.floor(targetEventCount * 0.45), name: 'ENTITY EXTRACTION' },
+      { threshold: Math.floor(targetEventCount * 0.70), name: 'CROSS-SOURCE CORRELATION' },
+      { threshold: Math.floor(targetEventCount * 0.90), name: 'TEMPORAL ANALYSIS' },
+      { threshold: targetEventCount, name: 'FINAL RECONSTRUCTION' }
     ];
 
-    let currentCount = 0;
+    let count = 0;
     let timerId: ReturnType<typeof setTimeout>;
 
+    // Smooth, non-looping monotonic progress steps
     const step = () => {
-      const activeStage = intervals.find((i) => currentCount < i.threshold) || intervals[intervals.length - 1];
-      setPipelinePhase(activeStage.phase);
+      // Fast start, natural pauses, slow near completion
+      let inc = 0;
+      if (count < targetEventCount * 0.3) {
+        inc = Math.floor(Math.random() * 80) + 40; // Fast
+      } else if (count < targetEventCount * 0.7) {
+        inc = Math.floor(Math.random() * 60) + 20; // Medium
+      } else if (count < targetEventCount * 0.95) {
+        inc = Math.floor(Math.random() * 40) + 10; // Slowing
+      } else {
+        inc = Math.floor(Math.random() * 15) + 5; // Near end
+      }
 
-      const inc = Math.floor(Math.random() * (activeStage.incMax - activeStage.incMin)) + activeStage.incMin;
-      currentCount = Math.min(currentCount + inc, targetEventCount);
-      setEventCount(currentCount);
+      count = Math.min(count + inc, targetEventCount);
+      setCurrentRecord(count);
 
-      if (currentCount < targetEventCount) {
-        timerId = setTimeout(step, activeStage.delay);
+      // Phase update
+      const activePhase = phases.find((p) => count <= p.threshold) || phases[phases.length - 1];
+      setPipelinePhase(activePhase.name);
+
+      if (count < targetEventCount) {
+        // Natural small pauses
+        const delay = (count > targetEventCount * 0.4 && count < targetEventCount * 0.45) ? 220 : 70;
+        timerId = setTimeout(step, delay);
+      } else {
+        // EXTRACTION COMPLETE
+        setStatus('complete');
+        setPipelinePhase('EXTRACTION COMPLETE');
       }
     };
 
-    timerId = setTimeout(step, 100);
+    timerId = setTimeout(step, 80);
 
-    // Reveal entities sequentially
-    let index = 0;
+    // Sequential entity reveal
+    let entityIdx = 0;
     const entityInterval = setInterval(() => {
-      if (index < targetEntities.length) {
-        const nextEnt = targetEntities[index];
-        setVisibleEntities((prev) => [...prev, nextEnt]);
-        index++;
+      if (entityIdx < targetEntities.length) {
+        const nextEnt = targetEntities[entityIdx];
+        setVisibleEntities((prev) => {
+          if (prev.some((e) => e.id === nextEnt.id)) return prev;
+          return [...prev, nextEnt];
+        });
+        entityIdx++;
       } else {
         clearInterval(entityInterval);
-        setTimeout(() => {
-          onCompleteStage();
-        }, 1500);
       }
-    }, 500);
+    }, 400);
 
     return () => {
       clearTimeout(timerId);
       clearInterval(entityInterval);
     };
-  }, [targetEntities, targetEventCount, onCompleteStage]);
+  }, [targetEventCount, targetEntities]);
+
+  // Handle stage completion transition when status becomes complete
+  useEffect(() => {
+    if (status === 'complete') {
+      const completionTimer = setTimeout(() => {
+        onCompleteStage();
+      }, 1200);
+      return () => clearTimeout(completionTimer);
+    }
+  }, [status, onCompleteStage]);
 
   const categories = [
     { key: 'identity', label: 'IDENTITIES', icon: Users, color: 'text-purple-400' },
@@ -96,15 +136,23 @@ export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEnti
           </h2>
         </div>
 
-        {/* Live Event Counter & Phase Banner */}
-        <div className="px-4 py-2.5 bg-dark-900 border border-cyan-800/80 rounded-xl flex items-center gap-3">
-          <Loader2 className="w-5 h-5 text-cyan-400 animate-spin shrink-0" />
+        {/* Live Monotonic Progress Counter */}
+        <div className={`px-4 py-2.5 bg-dark-900 border rounded-xl flex items-center gap-3 transition-colors ${
+          status === 'complete' ? 'border-emerald-800 bg-emerald-950/40' : 'border-cyan-800/80'
+        }`}>
+          {status === 'complete' ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+          ) : (
+            <Loader2 className="w-5 h-5 text-cyan-400 animate-spin shrink-0" />
+          )}
           <div>
-            <span className="text-[10px] font-mono text-cyan-400 block uppercase font-bold">
+            <span className={`text-[10px] font-mono block uppercase font-bold ${
+              status === 'complete' ? 'text-emerald-400' : 'text-cyan-400'
+            }`}>
               ● {pipelinePhase}
             </span>
             <span className="text-lg font-mono font-bold text-slate-100">
-              {eventCount.toLocaleString()} / {targetEventCount.toLocaleString()} EVENTS
+              {currentRecord.toLocaleString()} / {targetEventCount.toLocaleString()} RECORDS
             </span>
           </div>
         </div>
@@ -154,13 +202,13 @@ export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEnti
       </div>
 
       {/* Completion Banner */}
-      {visibleEntities.length >= targetEntities.length && (
-        <div className="p-3 bg-emerald-950/50 border border-emerald-800/80 rounded-lg text-xs font-mono text-emerald-400 flex items-center justify-between">
+      {status === 'complete' && (
+        <div className="p-3 bg-emerald-950/50 border border-emerald-800/80 rounded-lg text-xs font-mono text-emerald-400 flex items-center justify-between animate-fade-in">
           <span className="flex items-center gap-2 font-bold">
-            <CheckCircle2 className="w-4 h-4" /> {targetEventCount.toLocaleString()} RAW EVENTS NORMALIZED & EXTRACTED
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" /> EXTRACTION COMPLETE: {targetEventCount.toLocaleString()} TELEMETRY RECORDS PROCESSED
           </span>
           <span className="text-cyan-400 flex items-center gap-1">
-            Constructing Correlation Graph <ArrowRight className="w-3.5 h-3.5" />
+            Proceeding to Candidate Discovery <ArrowRight className="w-3.5 h-3.5" />
           </span>
         </div>
       )}
