@@ -11,20 +11,25 @@ import {
   HelpCircle,
   Sparkles
 } from 'lucide-react';
-import { DEMO_TIMELINE_EVENTS } from '../data/vaultDemoData';
 import { EvidenceProvenanceModal } from '../components/Vault/EvidenceProvenanceModal';
+import { EmptyInvestigationState } from '../components/Common/EmptyInvestigationState';
+import { useInvestigation } from '../context/InvestigationContext';
 
 export const IncidentReplayPage = () => {
+  const { analysisData, hasAnalysisData } = useInvestigation();
   const [currentStep, setCurrentStep] = useState<number>(0);
   const [isPlaying, setIsPlaying] = useState<boolean>(false);
   const [isProvenanceOpen, setIsProvenanceOpen] = useState<boolean>(false);
 
+  // Use dynamic timeline stages from backend analysisData
+  const timelineEvents = analysisData?.timeline || [];
+
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
-    if (isPlaying) {
+    if (isPlaying && timelineEvents.length > 0) {
       interval = setInterval(() => {
         setCurrentStep((prev) => {
-          if (prev < DEMO_TIMELINE_EVENTS.length - 1) {
+          if (prev < timelineEvents.length - 1) {
             return prev + 1;
           } else {
             setIsPlaying(false);
@@ -34,12 +39,41 @@ export const IncidentReplayPage = () => {
       }, 2500);
     }
     return () => clearInterval(interval);
-  }, [isPlaying]);
+  }, [isPlaying, timelineEvents.length]);
 
-  const activeEvent = DEMO_TIMELINE_EVENTS[currentStep];
+  if (!hasAnalysisData || timelineEvents.length === 0) {
+    return (
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+        <div className="bg-dark-800/80 border border-dark-700 rounded-xl p-6 overflow-hidden backdrop-blur-sm shadow-xl font-sans">
+          <div className="space-y-2">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-semibold uppercase tracking-wider font-mono">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Step-by-Step Incident Sequence Replay</span>
+            </div>
+
+            <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight flex items-center gap-3 font-mono">
+              <PlayCircle className="w-8 h-8 text-cyan-400" />
+              ECHO Incident Replay Engine
+            </h1>
+
+            <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-3xl">
+              Step-by-step chronological replay of the correlated multi-stage attack sequence.
+            </p>
+          </div>
+        </div>
+
+        <EmptyInvestigationState
+          moduleTitle="Incident Replay Engine"
+          moduleDescription="Upload evidence and complete analysis in the Evidence Vault to generate an interactive incident replay."
+        />
+      </div>
+    );
+  }
+
+  const activeEvent = timelineEvents[currentStep] || timelineEvents[0];
 
   return (
-    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+    <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-sans">
       {/* Header */}
       <div className="bg-dark-800/80 border border-dark-700 rounded-xl p-6 overflow-hidden backdrop-blur-sm shadow-xl">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -49,7 +83,7 @@ export const IncidentReplayPage = () => {
               <span>Step-by-Step Incident Sequence Replay</span>
             </div>
 
-            <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight flex items-center gap-3">
+            <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight flex items-center gap-3 font-mono">
               <PlayCircle className="w-8 h-8 text-cyan-400" />
               ECHO Incident Replay Engine
             </h1>
@@ -76,10 +110,10 @@ export const IncidentReplayPage = () => {
             </div>
             <div>
               <div className="text-xs font-mono font-bold text-cyan-400 uppercase">
-                REPLAY STEP {currentStep + 1} OF {DEMO_TIMELINE_EVENTS.length}
+                REPLAY STEP {currentStep + 1} OF {timelineEvents.length}
               </div>
               <div className="text-sm font-bold text-slate-100 mt-0.5">
-                {activeEvent.title} ({activeEvent.time})
+                {activeEvent.eventTitle || activeEvent.stageName} ({activeEvent.timestamp})
               </div>
             </div>
           </div>
@@ -118,9 +152,9 @@ export const IncidentReplayPage = () => {
             <button
               onClick={() => {
                 setIsPlaying(false);
-                setCurrentStep((prev) => Math.min(prev + 1, DEMO_TIMELINE_EVENTS.length - 1));
+                setCurrentStep((prev) => Math.min(prev + 1, timelineEvents.length - 1));
               }}
-              disabled={currentStep === DEMO_TIMELINE_EVENTS.length - 1}
+              disabled={currentStep === timelineEvents.length - 1}
               className="p-2 bg-dark-900 border border-dark-700 hover:bg-dark-700 text-slate-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
             >
               <ChevronRight className="w-4 h-4" />
@@ -141,13 +175,13 @@ export const IncidentReplayPage = () => {
 
         {/* Scrubber Timeline Buttons */}
         <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-8 gap-2 font-mono text-xs">
-          {DEMO_TIMELINE_EVENTS.map((evt, idx) => {
+          {timelineEvents.map((evt, idx) => {
             const isCurrent = idx === currentStep;
             const isPast = idx < currentStep;
 
             return (
               <button
-                key={evt.id}
+                key={evt.id || idx}
                 onClick={() => {
                   setIsPlaying(false);
                   setCurrentStep(idx);
@@ -160,8 +194,8 @@ export const IncidentReplayPage = () => {
                     : 'bg-dark-900 text-slate-500 border-dark-700'
                 }`}
               >
-                <span className="text-[10px] block opacity-80">{evt.time}</span>
-                <span className="truncate text-[11px] font-bold mt-1 block">{evt.title}</span>
+                <span className="text-[10px] block opacity-80">{evt.timestamp || evt.time}</span>
+                <span className="truncate text-[11px] font-bold mt-1 block">{evt.eventTitle || evt.stageName}</span>
               </button>
             );
           })}
@@ -173,9 +207,9 @@ export const IncidentReplayPage = () => {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-dark-700 pb-4 font-mono text-xs">
           <div className="flex items-center gap-3">
             <span className="text-cyan-400 font-bold text-sm flex items-center gap-1.5">
-              <Clock className="w-4 h-4" /> {activeEvent.time}
+              <Clock className="w-4 h-4" /> {activeEvent.timestamp || activeEvent.time}
             </span>
-            <span className="text-slate-200 font-bold text-base font-sans">{activeEvent.title}</span>
+            <span className="text-slate-200 font-bold text-base font-sans">{activeEvent.eventTitle || activeEvent.stageName}</span>
           </div>
 
           <div className="flex items-center gap-2">
@@ -185,7 +219,7 @@ export const IncidentReplayPage = () => {
               activeEvent.severity === 'high' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
               'bg-blue-950 text-blue-400 border border-blue-800'
             }`}>
-              {activeEvent.severity}
+              {activeEvent.severity || 'INFO'}
             </span>
           </div>
         </div>
@@ -198,12 +232,12 @@ export const IncidentReplayPage = () => {
           </div>
           <div>
             <span className="text-slate-500 text-[10px] block uppercase font-bold">HOST / IP INDICATOR</span>
-            <span className="text-blue-300 font-bold text-sm">{activeEvent.ipOrHost}</span>
+            <span className="text-blue-300 font-bold text-sm">{activeEvent.ipOrDevice || activeEvent.ipOrHost}</span>
           </div>
         </div>
 
         <p className="text-sm text-slate-200 font-sans leading-relaxed p-4 bg-dark-900 rounded-xl border border-dark-700">
-          {activeEvent.description}
+          {activeEvent.connectionExplanation || activeEvent.description}
         </p>
 
         {/* Evidence Provenance Button */}
@@ -226,8 +260,8 @@ export const IncidentReplayPage = () => {
       <EvidenceProvenanceModal
         isOpen={isProvenanceOpen}
         onClose={() => setIsProvenanceOpen(false)}
-        eventTitle={activeEvent.title}
-        sourceFile={`${activeEvent.source.toLowerCase().replace(/\s+/g, '_')}_telemetry.pdf`}
+        eventTitle={activeEvent.eventTitle || activeEvent.stageName}
+        sourceFile={`${(activeEvent.source || 'telemetry').toLowerCase().replace(/\s+/g, '_')}_log.txt`}
       />
     </div>
   );

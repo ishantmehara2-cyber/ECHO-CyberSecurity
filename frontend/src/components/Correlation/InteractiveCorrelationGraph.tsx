@@ -21,14 +21,25 @@ import { CorrelationLink } from '../../types/correlation';
 import { DEMO_GRAPH_NODES } from '../../data/vaultDemoData';
 import { CORRELATION_LINKS } from '../../data/correlationEngine';
 
-export const InteractiveCorrelationGraph = () => {
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(DEMO_GRAPH_NODES[0]);
-  const [selectedLink, setSelectedLink] = useState<CorrelationLink | null>(CORRELATION_LINKS[0]);
+interface InteractiveCorrelationGraphProps {
+  customNodes?: any[];
+  customLinks?: any[];
+}
+
+export const InteractiveCorrelationGraph = ({
+  customNodes,
+  customLinks
+}: InteractiveCorrelationGraphProps) => {
+  const nodes = (customNodes && customNodes.length > 0) ? customNodes : DEMO_GRAPH_NODES;
+  const links = (customLinks && customLinks.length > 0) ? customLinks : CORRELATION_LINKS;
+
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(nodes[0] || null);
+  const [selectedLink, setSelectedLink] = useState<CorrelationLink | null>(links[0] || null);
   const [isHighlightPathOnly, setIsHighlightPathOnly] = useState<boolean>(true);
 
   const handleResetSelection = () => {
-    setSelectedNode(DEMO_GRAPH_NODES[0]);
-    setSelectedLink(CORRELATION_LINKS[0]);
+    setSelectedNode(nodes[0] || null);
+    setSelectedLink(links[0] || null);
     setIsHighlightPathOnly(false);
   };
 
@@ -43,7 +54,7 @@ export const InteractiveCorrelationGraph = () => {
   ];
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl font-sans">
       {/* 1. Header & Controls */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-700 pb-4">
         <div>
@@ -55,7 +66,7 @@ export const InteractiveCorrelationGraph = () => {
               CROSS-SILO RELATIONSHIPS
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mt-1">
+          <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
             Multi-Vector Cross-Silo Relationship Graph
           </h2>
         </div>
@@ -101,20 +112,7 @@ export const InteractiveCorrelationGraph = () => {
         </ul>
       </div>
 
-      {/* 3. ECHO KEY FINDING Banner */}
-      <div className="p-4 bg-cyan-950/40 border border-cyan-500/60 rounded-xl space-y-1 text-xs">
-        <div className="flex items-center gap-2 font-mono font-bold text-cyan-400 text-xs uppercase">
-          <Sparkles className="w-4 h-4" /> ECHO KEY FINDING
-        </div>
-        <p className="text-slate-200 font-sans leading-relaxed">
-          Out of <strong>2,214 analysed events</strong>, ECHO identified a smaller correlated cluster involving a shared user account (<strong className="text-purple-300 font-mono">employee_07</strong>), host (<strong className="text-blue-300 font-mono">WORKSTATION-07</strong>), and network indicators (<strong className="text-red-300 font-mono">185.220.101.45</strong> & <strong className="text-emerald-300 font-mono">198.51.100.77</strong>).
-        </p>
-        <div className="text-slate-400 text-[11px] font-sans pt-1">
-          <strong className="text-slate-300 font-mono uppercase">WHY IT MATTERS:</strong> These events were initially scattered across different telemetry sources but share verified evidence-based relationships.
-        </div>
-      </div>
-
-      {/* 4. CLEAN GRAPH LEGEND (NO EMOJIS) */}
+      {/* 3. CLEAN GRAPH LEGEND (NO EMOJIS) */}
       <div className="p-3 bg-dark-900 border border-dark-700 rounded-xl flex flex-wrap items-center justify-between gap-3 text-xs font-mono">
         <span className="text-slate-500 font-bold uppercase text-[10px]">GRAPH LEGEND:</span>
         <div className="flex flex-wrap items-center gap-4">
@@ -130,7 +128,7 @@ export const InteractiveCorrelationGraph = () => {
         </div>
       </div>
 
-      {/* 5. Main Canvas & WHY ARE THESE CONNECTED Panel Layout */}
+      {/* 4. Main Canvas & WHY ARE THESE CONNECTED Panel Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 
         {/* Interactive SVG Canvas Area (2 cols) */}
@@ -140,7 +138,7 @@ export const InteractiveCorrelationGraph = () => {
 
           <div className="relative z-10 flex justify-between items-center text-xs font-mono text-slate-400">
             <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
-              <Network className="w-4 h-4" /> Correlated Investigation Path
+              <Network className="w-4 h-4" /> Correlated Investigation Path ({nodes.length} Nodes • {links.length} Edges)
             </span>
             <span className="text-slate-400">Select Nodes or Edges for Details</span>
           </div>
@@ -156,9 +154,9 @@ export const InteractiveCorrelationGraph = () => {
                 </linearGradient>
               </defs>
 
-              {CORRELATION_LINKS.map((link) => {
-                const srcNode = DEMO_GRAPH_NODES.find((n) => n.id === link.sourceNodeId);
-                const tgtNode = DEMO_GRAPH_NODES.find((n) => n.id === link.targetNodeId);
+              {links.map((link) => {
+                const srcNode = nodes.find((n) => n.id === link.sourceNodeId) || nodes[0];
+                const tgtNode = nodes.find((n) => n.id === link.targetNodeId) || nodes[nodes.length - 1];
                 if (!srcNode || !tgtNode) return null;
 
                 const isSelected = selectedLink?.id === link.id;
@@ -166,10 +164,10 @@ export const InteractiveCorrelationGraph = () => {
                 return (
                   <g key={link.id} className="pointer-events-auto cursor-pointer" onClick={() => setSelectedLink(link)}>
                     <line
-                      x1={`${srcNode.x}%`}
-                      y1={`${srcNode.y}%`}
-                      x2={`${tgtNode.x}%`}
-                      y2={`${tgtNode.y}%`}
+                      x1={`${srcNode.x || 20}%`}
+                      y1={`${srcNode.y || 30}%`}
+                      x2={`${tgtNode.x || 80}%`}
+                      y2={`${tgtNode.y || 70}%`}
                       stroke={isSelected ? '#22d3ee' : 'url(#edgeGrad)'}
                       strokeWidth={isSelected ? '4' : '2'}
                       strokeDasharray={isSelected ? 'none' : '6 3'}
@@ -181,15 +179,17 @@ export const InteractiveCorrelationGraph = () => {
             </svg>
 
             {/* Descriptive 3-Line Nodes */}
-            {DEMO_GRAPH_NODES.map((node) => {
+            {nodes.map((node, idx) => {
               const isSelected = selectedNode?.id === node.id;
-              const isHighlighted = isHighlightPathOnly ? node.highlighted : true;
+              const isHighlighted = isHighlightPathOnly ? (node.highlighted ?? true) : true;
+              const nodeX = node.x || (15 + (idx * 25) % 70);
+              const nodeY = node.y || (20 + (idx * 20) % 60);
 
               return (
                 <div
-                  key={node.id}
+                  key={node.id || idx}
                   onClick={() => setSelectedNode(node)}
-                  style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                  style={{ left: `${nodeX}%`, top: `${nodeY}%` }}
                   className={`absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 z-20 group ${
                     !isHighlighted ? 'opacity-30' : 'opacity-100'
                   }`}
@@ -203,7 +203,7 @@ export const InteractiveCorrelationGraph = () => {
                     {/* Line 1: Type Header */}
                     <div className="flex items-center justify-between border-b border-dark-700/80 pb-1">
                       <span className="text-[9px] uppercase tracking-wider text-cyan-400 font-extrabold">
-                        {node.type.toUpperCase()}
+                        {(node.type || node.category || 'node').toUpperCase()}
                       </span>
                       <div className={`w-2 h-2 rounded-full ${
                         node.type === 'ip' ? 'bg-red-400' :
@@ -216,12 +216,12 @@ export const InteractiveCorrelationGraph = () => {
 
                     {/* Line 2: Entity Value */}
                     <div className="text-xs font-extrabold text-slate-100 truncate">
-                      {node.label}
+                      {node.label || node.name}
                     </div>
 
                     {/* Line 3: Short Role */}
                     <div className="text-[10px] text-slate-400 font-sans truncate font-normal">
-                      {node.details}
+                      {node.details || node.description || 'Observed Entity'}
                     </div>
                   </div>
                 </div>
@@ -232,9 +232,9 @@ export const InteractiveCorrelationGraph = () => {
           {/* Edge Selector Buttons Bar */}
           <div className="relative z-10 pt-3 border-t border-dark-800 flex flex-wrap items-center gap-1.5 text-xs font-mono">
             <span className="text-slate-500 mr-1">EXPLICIT EDGES:</span>
-            {CORRELATION_LINKS.map((link, idx) => (
+            {links.map((link, idx) => (
               <button
-                key={link.id}
+                key={link.id || idx}
                 onClick={() => setSelectedLink(link)}
                 className={`px-2 py-0.5 rounded border transition-colors cursor-pointer text-[11px] ${
                   selectedLink?.id === link.id
@@ -249,7 +249,7 @@ export const InteractiveCorrelationGraph = () => {
         </div>
 
         {/* WHY ARE THESE CONNECTED? Panel (1 col) */}
-        <div className="space-y-6">
+        <div className="space-y-6 font-sans">
           {selectedLink && (
             <div className="bg-dark-900 border border-cyan-500/80 rounded-xl p-5 space-y-4 shadow-xl relative overflow-hidden">
               <div className="flex items-center justify-between border-b border-cyan-900/60 pb-3">
@@ -277,7 +277,7 @@ export const InteractiveCorrelationGraph = () => {
                   MATCHING EVIDENCE FACTORS
                 </span>
 
-                {selectedLink.matchingFactors.map((factor, idx) => (
+                {selectedLink.matchingFactors && selectedLink.matchingFactors.map((factor, idx) => (
                   <div key={idx} className="p-2.5 bg-dark-800 border border-dark-700 rounded-lg text-xs space-y-0.5">
                     <div className="font-bold text-cyan-300 flex items-center gap-1.5 font-mono">
                       <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -312,7 +312,7 @@ export const InteractiveCorrelationGraph = () => {
               <div>
                 <span className="text-slate-500 text-[10px] block">ROLE SUMMARY</span>
                 <p className="text-[11px] text-slate-300 font-sans leading-snug mt-0.5">
-                  {selectedNode.details}
+                  {selectedNode.details || 'Observed security entity.'}
                 </p>
               </div>
             </div>

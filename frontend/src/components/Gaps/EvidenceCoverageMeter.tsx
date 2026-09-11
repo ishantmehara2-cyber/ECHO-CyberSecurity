@@ -1,11 +1,16 @@
 import { ShieldCheck, Info } from 'lucide-react';
 import { COVERAGE_SUMMARY_METRICS } from '../../data/gapDetectionEngine';
 
-export const EvidenceCoverageMeter = () => {
+interface EvidenceCoverageMeterProps {
+  customScore?: number;
+}
+
+export const EvidenceCoverageMeter = ({ customScore }: EvidenceCoverageMeterProps) => {
   const metrics = COVERAGE_SUMMARY_METRICS;
+  const score = customScore !== undefined ? customScore : metrics.overallCoverageScore;
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 shadow-xl space-y-5">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 shadow-xl space-y-5 font-sans">
       {/* Top Header & Meter Score */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-dark-700 pb-4">
         <div>
@@ -15,7 +20,7 @@ export const EvidenceCoverageMeter = () => {
               ECHO EVIDENCE COVERAGE METRIC
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mt-1">
+          <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
             Telemetry Completeness Assessment
           </h2>
         </div>
@@ -23,12 +28,12 @@ export const EvidenceCoverageMeter = () => {
         {/* Score Badge */}
         <div className="px-4 py-2.5 bg-dark-900 border border-cyan-500/60 rounded-xl font-mono text-center shrink-0">
           <span className="text-slate-500 block text-[10px] uppercase font-bold">AVAILABLE EVIDENCE COVERAGE</span>
-          <span className="text-cyan-400 font-extrabold text-xl">{metrics.overallCoverageScore}%</span>
+          <span className="text-cyan-400 font-extrabold text-xl">{score}%</span>
         </div>
       </div>
 
       {/* Source-by-Source Breakdown */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono text-xs">
         {metrics.sources.map((src) => (
           <div key={src.sourceName} className="bg-dark-900 border border-dark-700 rounded-xl p-4 space-y-3">
             <div className="flex justify-between items-center text-xs font-mono">

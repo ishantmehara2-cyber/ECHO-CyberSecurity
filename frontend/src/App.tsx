@@ -7,23 +7,26 @@ import CorrelationEnginePage from './pages/CorrelationEnginePage';
 import AttackReconstructionPage from './pages/AttackReconstructionPage';
 import EvidenceIntelligencePage from './pages/EvidenceIntelligencePage';
 import IncidentReplayPage from './pages/IncidentReplayPage';
+import { InvestigationProvider } from './context/InvestigationContext';
 
 function App() {
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={<MainLayout />}>
-          <Route index element={<CommandCenter />} />
-          <Route path="evidence-vault" element={<EvidenceVault />} />
-          <Route path="live-telemetry" element={<LiveTelemetry />} />
-          <Route path="correlation-engine" element={<CorrelationEnginePage />} />
-          <Route path="attack-reconstruction" element={<AttackReconstructionPage />} />
-          <Route path="evidence-intelligence" element={<EvidenceIntelligencePage />} />
-          <Route path="incident-replay" element={<IncidentReplayPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Route>
-      </Routes>
-    </Router>
+    <InvestigationProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={<MainLayout />}>
+            <Route index element={<CommandCenter />} />
+            <Route path="evidence-vault" element={<EvidenceVault />} />
+            <Route path="live-telemetry" element={<LiveTelemetry />} />
+            <Route path="correlation-engine" element={<CorrelationEnginePage />} />
+            <Route path="attack-reconstruction" element={<AttackReconstructionPage />} />
+            <Route path="evidence-intelligence" element={<EvidenceIntelligencePage />} />
+            <Route path="incident-replay" element={<IncidentReplayPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </Router>
+    </InvestigationProvider>
   );
 }
 

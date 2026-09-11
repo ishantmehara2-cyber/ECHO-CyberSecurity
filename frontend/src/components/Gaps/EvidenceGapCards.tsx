@@ -4,15 +4,18 @@ import { EvidenceGap } from '../../types/gap';
 
 interface EvidenceGapCardsProps {
   onSelectGap: (gap: EvidenceGap) => void;
+  customGaps?: any[];
 }
 
-export const EvidenceGapCards = ({ onSelectGap }: EvidenceGapCardsProps) => {
+export const EvidenceGapCards = ({ onSelectGap, customGaps }: EvidenceGapCardsProps) => {
+  const gapsList = (customGaps && customGaps.length > 0) ? customGaps : DETECTED_EVIDENCE_GAPS;
+
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 font-sans">
       <div className="flex items-center justify-between">
         <h2 className="text-xs font-mono font-bold text-slate-400 uppercase tracking-wider flex items-center gap-2">
           <AlertTriangle className="w-4 h-4 text-amber-400" />
-          Detected Potential Evidence Gaps ({DETECTED_EVIDENCE_GAPS.length})
+          Detected Potential Evidence Gaps ({gapsList.length})
         </h2>
         <span className="text-[11px] font-mono text-slate-500">
           Click any card to inspect full gap reasoning and collection steps.
@@ -20,9 +23,9 @@ export const EvidenceGapCards = ({ onSelectGap }: EvidenceGapCardsProps) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {DETECTED_EVIDENCE_GAPS.map((gap) => (
+        {gapsList.map((gap, idx) => (
           <div
-            key={gap.id}
+            key={gap.id || idx}
             onClick={() => onSelectGap(gap)}
             className="bg-dark-800 border border-amber-500/60 hover:border-amber-400 rounded-xl p-6 space-y-4 shadow-xl cursor-pointer transition-all hover:scale-[1.01] relative overflow-hidden group"
           >
@@ -30,7 +33,7 @@ export const EvidenceGapCards = ({ onSelectGap }: EvidenceGapCardsProps) => {
             <div className="flex items-center justify-between border-b border-dark-700 pb-3 font-mono text-xs">
               <div className="flex items-center gap-2">
                 <span className="px-2 py-0.5 rounded bg-amber-950 text-amber-400 border border-amber-800 font-bold">
-                  {gap.id}
+                  {gap.id || `GAP-0${idx + 1}`}
                 </span>
                 <span className="font-bold text-slate-200">{gap.expectedStage}</span>
               </div>
@@ -38,7 +41,7 @@ export const EvidenceGapCards = ({ onSelectGap }: EvidenceGapCardsProps) => {
               <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
                 gap.priority === 'HIGH' ? 'bg-red-950 text-red-400 border border-red-800' : 'bg-amber-950 text-amber-400 border border-amber-800'
               }`}>
-                {gap.priority} PRIORITY
+                {gap.priority || 'HIGH'} PRIORITY
               </span>
             </div>
 
@@ -72,7 +75,7 @@ export const EvidenceGapCards = ({ onSelectGap }: EvidenceGapCardsProps) => {
 
             {/* Footer */}
             <div className="pt-3 border-t border-dark-700 flex items-center justify-between text-xs font-mono">
-              <span className="text-slate-500">GAP CONFIDENCE: <strong className="text-amber-400">{gap.gapConfidence}%</strong></span>
+              <span className="text-slate-500">GAP CONFIDENCE: <strong className="text-amber-400">{gap.gapConfidence || 78}%</strong></span>
               <span className="text-cyan-400 font-bold flex items-center gap-1 group-hover:translate-x-1 transition-transform">
                 INSPECT ANALYST DETAILS <ArrowRight className="w-3.5 h-3.5" />
               </span>

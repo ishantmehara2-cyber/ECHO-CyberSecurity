@@ -14,7 +14,6 @@ import { InvestigationReportModal } from '../components/Vault/InvestigationRepor
 import { CandidateDiscoveryReportModal } from '../components/Vault/CandidateDiscoveryReportModal';
 import { ResetConfirmationModal } from '../components/Vault/ResetConfirmationModal';
 import { OFFICIAL_DEMO_FILES, SILO_SLOT_CONFIGS } from '../data/vaultDemoData';
-import { CANDIDATES_DATASET } from '../data/candidateDiscoveryData';
 import {
   UploadedEvidenceFile,
   InvestigationStage,
@@ -22,10 +21,19 @@ import {
   EvidenceClassification
 } from '../types/vault';
 import { InvestigationCandidate } from '../types/candidates';
-import { analyzeFiles, BackendAnalysisResult } from '../services/investigationService';
+import { analyzeFiles } from '../services/investigationService';
+import { useInvestigation } from '../context/InvestigationContext';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export const EvidenceVault = () => {
+  const {
+    analysisData,
+    setAnalysisData,
+    selectedCandidate,
+    setSelectedCandidate,
+    clearAnalysisData
+  } = useInvestigation();
+
   // Mode selection state: default to 'lab' mode (clean empty upload zone)
   const [investigationMode, setInvestigationMode] = useState<'demo' | 'lab'>('lab');
 
@@ -38,8 +46,6 @@ export const EvidenceVault = () => {
   });
 
   const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
-  const [selectedCandidate, setSelectedCandidate] = useState<InvestigationCandidate>(CANDIDATES_DATASET[0]);
-  const [analysisData, setAnalysisData] = useState<BackendAnalysisResult | null>(null);
   const [analysisError, setAnalysisError] = useState<string | null>(null);
 
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
@@ -152,7 +158,7 @@ export const EvidenceVault = () => {
     });
     setCurrentStage('idle');
     setAnalysisError(null);
-    setAnalysisData(null);
+    clearAnalysisData();
   };
 
   const handleStartInvestigation = async () => {
