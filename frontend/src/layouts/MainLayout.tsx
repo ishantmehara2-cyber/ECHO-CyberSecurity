@@ -7,6 +7,7 @@ import {
   GitBranch,
   Search,
   PlayCircle,
+  FileCode2,
   Bell,
   UserCircle
 } from 'lucide-react';
@@ -35,6 +36,7 @@ const MainLayout = () => {
 
   const navItems = [
     { name: 'Command Center', path: '/', icon: ShieldAlert },
+    { name: 'Evidence Vault', path: '/evidence-vault', icon: FileCode2 },
     { name: 'Live Telemetry', path: '/live-telemetry', icon: Activity },
     { name: 'Correlation Engine', path: '/correlation-engine', icon: Network },
     { name: 'Attack Reconstruction', path: '/attack-reconstruction', icon: GitBranch },
