@@ -4,9 +4,14 @@ import { DEMO_ATTACK_DNA, DEMO_TIMELINE_EVENTS } from '../../data/vaultDemoData'
 interface InvestigationReportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  selectedEntityName?: string;
 }
 
-export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationReportModalProps) => {
+export const InvestigationReportModal = ({
+  isOpen,
+  onClose,
+  selectedEntityName = 'employee_07'
+}: InvestigationReportModalProps) => {
   if (!isOpen) return null;
 
   const handlePrint = () => {
@@ -14,18 +19,18 @@ export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationRepor
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in">
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-sans">
       <div className="bg-dark-900 border border-cyan-500/60 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
         {/* Modal Header */}
         <div className="p-6 bg-dark-800 border-b border-dark-700 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800">
+            <div className="p-2 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">
               <FileText className="w-6 h-6" />
             </div>
             <div>
               <div className="flex items-center gap-2">
                 <span className="text-xs font-mono font-bold text-cyan-400 uppercase">
-                  ECHO INVESTIGATION SUMMARY REPORT
+                  DEEP INVESTIGATION REPORT // {selectedEntityName.toUpperCase()}
                 </span>
                 <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
                   CONFIDENCE: 94%
@@ -63,7 +68,7 @@ export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationRepor
               1. EXECUTIVE SUMMARY
             </h3>
             <p className="text-xs text-slate-300 leading-relaxed">
-              ECHO automated correlation analysis processed <strong className="text-cyan-300">2,214 raw telemetry events</strong> across 4 independent evidence streams (Authentication, Endpoint, Threat Intel, Network). A high-confidence (<strong>94%</strong>) multi-stage attack sequence was reconstructed linking account compromise, endpoint execution, financial asset collection, local archiving, and encrypted exfiltration.
+              ECHO automated correlation analysis processed <strong className="text-cyan-300">2,214 raw telemetry events</strong> across 4 independent evidence streams for candidate <strong className="text-purple-300 font-mono">{selectedEntityName}</strong>. A high-confidence (<strong>94%</strong>) multi-stage attack sequence was reconstructed linking account compromise, endpoint execution, financial asset collection, local archiving, and encrypted exfiltration.
             </p>
           </div>
 
@@ -111,7 +116,7 @@ export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationRepor
                 <AlertTriangle className="w-4 h-4" /> 4. RISK & IMPACT ASSESSMENT
               </h3>
               <p className="text-xs text-slate-300 leading-relaxed">
-                Potential exfiltration of restricted financial assets (<code className="text-amber-300 font-mono">finance_records.xlsx</code>) totaling 148 MB transferred to external IP <code className="text-amber-300 font-mono">198.51.100.77</code>. Account <code className="text-cyan-300 font-mono">employee_07</code> displays indicators of credential compromise.
+                Potential exfiltration of restricted financial assets (<code className="text-amber-300 font-mono">finance_records.xlsx</code>) totaling 148 MB transferred to external IP <code className="text-amber-300 font-mono">198.51.100.77</code>. Account <code className="text-cyan-300 font-mono">{selectedEntityName}</code> displays indicators of credential compromise.
               </p>
             </div>
 
@@ -121,7 +126,7 @@ export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationRepor
               </h3>
               <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
                 <li>Preserve memory & disk forensic image of WORKSTATION-07.</li>
-                <li>Reset credentials & revoke active SSO session <code className="text-cyan-300 font-mono">SES-7F21A</code> for employee_07.</li>
+                <li>Reset credentials & revoke active SSO session <code className="text-cyan-300 font-mono">SES-7F21A</code> for {selectedEntityName}.</li>
                 <li>Block destination IP <code className="text-cyan-300 font-mono">198.51.100.77</code> on perimeter firewalls.</li>
                 <li>Conduct data exposure assessment for finance_records.xlsx.</li>
                 <li>Escalate ticket for Tier-2 SOC Analyst formal review.</li>
@@ -136,7 +141,7 @@ export const InvestigationReportModal = ({ isOpen, onClose }: InvestigationRepor
         </div>
 
         {/* Modal Footer */}
-        <div className="p-4 bg-dark-800 border-t border-dark-700 flex justify-end shrink-0">
+        <div className="p-4 bg-dark-800 border-t border-dark-800 flex justify-end">
           <button
             onClick={onClose}
             className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-colors cursor-pointer uppercase"

@@ -6,18 +6,22 @@ import { PreInvestigationSummary } from '../components/Vault/PreInvestigationSum
 import { InvestigationProgressTracker } from '../components/Vault/InvestigationProgressTracker';
 import { StageIngestion } from '../components/Vault/StageIngestion';
 import { StageEntityExtraction } from '../components/Vault/StageEntityExtraction';
+import { CandidateDiscoveryView } from '../components/Vault/CandidateDiscoveryView';
 import { StageCorrelationGraph } from '../components/Vault/StageCorrelationGraph';
 import { StageIncidentTimeline } from '../components/Vault/StageIncidentTimeline';
 import { StageWowMoment } from '../components/Vault/StageWowMoment';
 import { InvestigationReportModal } from '../components/Vault/InvestigationReportModal';
+import { CandidateDiscoveryReportModal } from '../components/Vault/CandidateDiscoveryReportModal';
 import { ResetConfirmationModal } from '../components/Vault/ResetConfirmationModal';
 import { OFFICIAL_DEMO_FILES, SILO_SLOT_CONFIGS } from '../data/vaultDemoData';
+import { CANDIDATES_DATASET } from '../data/candidateDiscoveryData';
 import {
   UploadedEvidenceFile,
   InvestigationStage,
   SiloSlotKey,
   EvidenceClassification
 } from '../types/vault';
+import { InvestigationCandidate } from '../types/candidates';
 
 export const EvidenceVault = () => {
   // 4 Silo slots state
@@ -29,11 +33,13 @@ export const EvidenceVault = () => {
   });
 
   const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
+  const [selectedCandidate, setSelectedCandidate] = useState<InvestigationCandidate>(CANDIDATES_DATASET[0]);
   const [isJudgeDemoMode, setIsJudgeDemoMode] = useState<boolean>(true);
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
+  const [isCandidateReportOpen, setIsCandidateReportOpen] = useState<boolean>(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
 
-  // Flatten active files into list for downstream pipeline stages
+  // Active files list
   const activeFileList: UploadedEvidenceFile[] = Object.values(siloFiles).filter(Boolean) as UploadedEvidenceFile[];
 
   const isAllDemoFilesPresent = OFFICIAL_DEMO_FILES.every((demo) =>
@@ -141,6 +147,11 @@ export const EvidenceVault = () => {
     }
   };
 
+  const handleSelectCandidate = (candidate: InvestigationCandidate) => {
+    setSelectedCandidate(candidate);
+    setCurrentStage('correlation');
+  };
+
   return (
     <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
       {/* 1. Header */}
@@ -189,8 +200,15 @@ export const EvidenceVault = () => {
 
       {currentStage === 'extraction' && (
         <StageEntityExtraction
-          onCompleteStage={() => setCurrentStage('correlation')}
+          onCompleteStage={() => setCurrentStage('discovery')}
           isDemoMode={isAllDemoFilesPresent}
+        />
+      )}
+
+      {currentStage === 'discovery' && (
+        <CandidateDiscoveryView
+          onSelectCandidate={handleSelectCandidate}
+          onOpenCandidateReport={() => setIsCandidateReportOpen(true)}
         />
       )}
 
@@ -212,10 +230,17 @@ export const EvidenceVault = () => {
         />
       )}
 
-      {/* Report Summary Modal */}
+      {/* Deep Selected Candidate Investigation Report Modal */}
       <InvestigationReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
+        selectedEntityName={selectedCandidate.entityName}
+      />
+
+      {/* Full Candidate Discovery Report Modal */}
+      <CandidateDiscoveryReportModal
+        isOpen={isCandidateReportOpen}
+        onClose={() => setIsCandidateReportOpen(false)}
       />
 
       {/* Reset Confirmation Modal */}

@@ -37,6 +37,7 @@ export type InvestigationStage =
   | 'idle'
   | 'ingestion'
   | 'extraction'
+  | 'discovery'
   | 'correlation'
   | 'timeline'
   | 'reconstruction'
