@@ -8,7 +8,9 @@ import {
   Lock,
   Globe,
   Monitor,
-  Info
+  Info,
+  AlertCircle,
+  X
 } from 'lucide-react';
 import { UploadedEvidenceFile } from '../../types/vault';
 
@@ -39,6 +41,7 @@ export const EvidenceUploadArea = ({
 }: EvidenceUploadAreaProps) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -49,27 +52,62 @@ export const EvidenceUploadArea = ({
     setIsDragging(false);
   };
 
+  const processUploadedFiles = (fileList: File[]) => {
+    const validPdfFiles: File[] = [];
+    let invalidFound = false;
+
+    fileList.forEach((f) => {
+      if (f.type === 'application/pdf' || f.name.toLowerCase().endsWith('.pdf')) {
+        validPdfFiles.push(f);
+      } else {
+        invalidFound = true;
+      }
+    });
+
+    if (invalidFound) {
+      setErrorMessage('Unable to extract usable telemetry from unsupported document format. Please upload valid .pdf files.');
+    } else {
+      setErrorMessage(null);
+    }
+
+    if (validPdfFiles.length > 0) {
+      onFileUpload(validPdfFiles);
+    }
+  };
+
   const handleDrop = (e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-      const droppedFiles = Array.from(e.dataTransfer.files).filter((f) => f.type === 'application/pdf' || f.name.endsWith('.pdf'));
-      if (droppedFiles.length > 0) {
-        onFileUpload(droppedFiles);
-      }
+      processUploadedFiles(Array.from(e.dataTransfer.files));
     }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
-      const selectedFiles = Array.from(e.target.files);
-      onFileUpload(selectedFiles);
+      processUploadedFiles(Array.from(e.target.files));
       e.target.value = '';
     }
   };
 
   return (
     <div className="space-y-6">
+      {/* Graceful Error Notification */}
+      {errorMessage && (
+        <div className="p-4 bg-red-950/80 border border-red-800 rounded-xl text-xs font-mono text-red-300 flex items-center justify-between shadow-lg animate-fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-4 h-4 text-red-400 shrink-0" />
+            <span>{errorMessage}</span>
+          </div>
+          <button
+            onClick={() => setErrorMessage(null)}
+            className="text-red-400 hover:text-red-200 p-1 cursor-pointer"
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
+      )}
+
       {/* Drag & Drop Upload Zone */}
       <div
         onDragOver={handleDragOver}

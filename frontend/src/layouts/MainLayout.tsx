@@ -11,6 +11,7 @@ import {
   Bell,
   UserCircle
 } from 'lucide-react';
+import { DemoFlowBar } from '../components/Demo/DemoFlowBar';
 
 const MainLayout = () => {
   const [backendStatus, setBackendStatus] = useState<'LOADING' | 'ONLINE' | 'OFFLINE'>('LOADING');
@@ -87,7 +88,7 @@ const MainLayout = () => {
       {/* Main Content Area */}
       <div className="flex-1 flex flex-col relative">
         {/* Header */}
-        <header className="h-16 bg-dark-800 border-b border-dark-700 flex items-center justify-between px-6 z-10">
+        <header className="h-16 bg-dark-800 border-b border-dark-700 flex items-center justify-between px-6 z-10 shrink-0">
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1 bg-dark-900 rounded-full border border-dark-700">
@@ -128,6 +129,9 @@ const MainLayout = () => {
             </div>
           </div>
         </header>
+
+        {/* Demo Presenter Flow Bar */}
+        <DemoFlowBar />
 
         {/* Page Content */}
         <main className="flex-1 overflow-auto bg-dark-900 relative">
