@@ -17,15 +17,26 @@ interface StageEntityExtractionProps {
   onCompleteStage: () => void;
   isDemoMode: boolean;
   totalParsedRecords?: number;
+  customEntities?: ExtractedEntity[];
 }
 
 export const StageEntityExtraction = ({
   onCompleteStage,
   isDemoMode,
-  totalParsedRecords = 2214
+  totalParsedRecords = 2214,
+  customEntities
 }: StageEntityExtractionProps) => {
-  const targetEventCount = isDemoMode ? 2214 : (totalParsedRecords || 640);
-  const targetEntities = isDemoMode ? DEMO_EXTRACTED_ENTITIES : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
+  const targetEventCount = (customEntities && customEntities.length > 0)
+    ? (totalParsedRecords || customEntities.length)
+    : isDemoMode
+    ? 2214
+    : (totalParsedRecords || 640);
+
+  const targetEntities = (customEntities && customEntities.length > 0)
+    ? customEntities
+    : isDemoMode
+    ? DEMO_EXTRACTED_ENTITIES
+    : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
 
   const [currentRecord, setCurrentRecord] = useState<number>(0);
   const [pipelinePhase, setPipelinePhase] = useState<string>('READING TELEMETRY');
@@ -52,16 +63,15 @@ export const StageEntityExtraction = ({
 
     // Smooth, non-looping monotonic progress steps
     const step = () => {
-      // Fast start, natural pauses, slow near completion
       let inc = 0;
       if (count < targetEventCount * 0.3) {
-        inc = Math.floor(Math.random() * 80) + 40; // Fast
+        inc = Math.max(1, Math.floor(targetEventCount * 0.1));
       } else if (count < targetEventCount * 0.7) {
-        inc = Math.floor(Math.random() * 60) + 20; // Medium
+        inc = Math.max(1, Math.floor(targetEventCount * 0.05));
       } else if (count < targetEventCount * 0.95) {
-        inc = Math.floor(Math.random() * 40) + 10; // Slowing
+        inc = Math.max(1, Math.floor(targetEventCount * 0.02));
       } else {
-        inc = Math.floor(Math.random() * 15) + 5; // Near end
+        inc = 1;
       }
 
       count = Math.min(count + inc, targetEventCount);
@@ -72,9 +82,7 @@ export const StageEntityExtraction = ({
       setPipelinePhase(activePhase.name);
 
       if (count < targetEventCount) {
-        // Natural small pauses
-        const delay = (count > targetEventCount * 0.4 && count < targetEventCount * 0.45) ? 220 : 70;
-        timerId = setTimeout(step, delay);
+        timerId = setTimeout(step, 80);
       } else {
         // EXTRACTION COMPLETE
         setStatus('complete');
@@ -97,7 +105,7 @@ export const StageEntityExtraction = ({
       } else {
         clearInterval(entityInterval);
       }
-    }, 400);
+    }, 300);
 
     return () => {
       clearTimeout(timerId);
@@ -125,13 +133,13 @@ export const StageEntityExtraction = ({
   ];
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-700 pb-4">
         <div>
           <span className="text-xs font-mono font-bold text-cyan-400 uppercase">
             STAGE 2 // ENTITY & ATTRIBUTE EXTRACTION
           </span>
-          <h2 className="text-xl font-bold text-slate-100 mt-1">
+          <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
             Extracting Security Entities from Telemetry
           </h2>
         </div>

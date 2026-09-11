@@ -70,6 +70,9 @@ export const EvidenceVault = () => {
     const file = uploadedFiles[0];
     const lowerName = file.name.toLowerCase();
 
+    // Custom upload switches mode to 'lab'
+    setInvestigationMode('lab');
+
     const config = SILO_SLOT_CONFIGS.find((c) => c.key === slotKey);
     let classification: EvidenceClassification = config?.classification || 'unclassified';
     let sourceName = config?.sourceName || 'Unclassified Evidence';
@@ -261,6 +264,7 @@ export const EvidenceVault = () => {
           onCompleteStage={() => setCurrentStage('discovery')}
           isDemoMode={isAllDemoFilesPresent && investigationMode === 'demo'}
           totalParsedRecords={analysisData?.total_records || 2214}
+          customEntities={analysisData?.extractedEntities}
         />
       )}
 

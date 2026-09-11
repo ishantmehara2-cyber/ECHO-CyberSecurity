@@ -16,7 +16,7 @@ export const VaultHeader = ({
   fileCount
 }: VaultHeaderProps) => {
   return (
-    <div className="bg-dark-800/80 border border-dark-700 rounded-xl p-6 overflow-hidden backdrop-blur-sm shadow-xl space-y-4">
+    <div className="bg-dark-800/80 border border-dark-700 rounded-xl p-6 overflow-hidden backdrop-blur-sm shadow-xl space-y-4 font-sans">
       <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
         {/* Title */}
         <div className="space-y-1.5">
@@ -34,7 +34,7 @@ export const VaultHeader = ({
           </p>
         </div>
 
-        {/* Investigation Mode Selector (Demo vs Lab/Dataset Mode) */}
+        {/* Mode Selector */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 shrink-0 font-mono text-xs">
           <div className="p-1 bg-dark-900 border border-dark-700 rounded-xl flex items-center gap-1">
             <button
@@ -70,7 +70,7 @@ export const VaultHeader = ({
           <div className="flex items-center gap-2">
             <FileCode className="w-4 h-4 text-purple-400 shrink-0" />
             <span>
-              <strong>LAB DATASET MODE ACTIVE:</strong> Upload JSON, CSV, JSONL, LOG, or TXT telemetry from organizer challenge environments.
+              <strong>REAL ANALYSIS MODE:</strong> Analyzing uploaded telemetry evidence from challenge environment.
             </span>
           </div>
 
@@ -81,7 +81,7 @@ export const VaultHeader = ({
       ) : (
         <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg text-xs font-mono text-slate-400 flex items-center justify-between">
           <span>
-            DEMO MODE ACTIVE: Using official 4-silo synthetic attack scenario dataset.
+            DEMO MODE ACTIVE: Using 4-silo synthetic attack scenario dataset.
           </span>
 
           <div className="flex items-center gap-2 font-bold">
