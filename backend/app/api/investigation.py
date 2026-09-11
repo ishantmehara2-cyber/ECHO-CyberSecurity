@@ -47,12 +47,12 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
                 evt["source"] = source_detected
             all_raw_events.append(evt)
 
-    total_records = len(all_raw_events) if all_raw_events else 2214
+    total_records = len(all_raw_events)
     print(f"TOTAL NORMALIZED RECORDS: {total_records}", flush=True)
     print("====================================================\n", flush=True)
 
     # Pipeline Processing
-    pipeline_res = run_investigation_pipeline(custom_events=all_raw_events if all_raw_events else None)
+    pipeline_res = run_investigation_pipeline(custom_events=all_raw_events if len(all_raw_events) > 0 else None)
 
     # Dynamic Entity Extraction & Grouping
     categorized_entities = {
@@ -66,22 +66,10 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
 
     # Dynamic Suspicious Entity Candidate Ranking
     suspicious_entities = rank_suspicious_candidates(pipeline_res.normalizedEvents)
-    if not suspicious_entities:
-        suspicious_entities = [
-            {
-                "rank": 1,
-                "entityName": "employee_07",
-                "entityType": "identity",
-                "riskScore": 92,
-                "correlationConfidence": 94,
-                "status": "PRIORITY INVESTIGATION",
-                "primaryReason": "Multi-stage suspicious sequence across 4 sources"
-            }
-        ]
 
     return {
         "success": True,
-        "total_records": total_records,
+        "total_records": total_records if len(all_raw_events) > 0 else pipeline_res.totalRawEvents,
         "files_processed": files_processed_summary,
         "normalized_events": [e.dict() for e in pipeline_res.normalizedEvents],
         "entities": categorized_entities,

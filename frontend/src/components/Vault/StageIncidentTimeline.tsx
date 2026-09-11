@@ -5,42 +5,47 @@ import { DEMO_TIMELINE_EVENTS } from '../../data/vaultDemoData';
 
 interface StageIncidentTimelineProps {
   onCompleteStage: () => void;
+  customTimeline?: TimelineEvent[];
 }
 
-export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimelineProps) => {
+export const StageIncidentTimeline = ({
+  onCompleteStage,
+  customTimeline
+}: StageIncidentTimelineProps) => {
+  const eventsList = (customTimeline && customTimeline.length > 0) ? customTimeline : DEMO_TIMELINE_EVENTS;
   const [visibleEvents, setVisibleEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {
     let idx = 0;
     const interval = setInterval(() => {
-      if (idx < DEMO_TIMELINE_EVENTS.length) {
-        const nextEvt = DEMO_TIMELINE_EVENTS[idx];
+      if (idx < eventsList.length) {
+        const nextEvt = eventsList[idx];
         setVisibleEvents((prev) => [...prev, nextEvt]);
         idx++;
       } else {
         clearInterval(interval);
       }
-    }, 450);
+    }, 350);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [eventsList]);
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl font-sans">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-700 pb-4">
         <div>
           <span className="text-xs font-mono font-bold text-cyan-400 uppercase">
             STAGE 4 // INCIDENT TIMELINE RECONSTRUCTION
           </span>
-          <h2 className="text-xl font-bold text-slate-100 mt-1">
+          <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
             Chronological Sequence of Correlated Events
           </h2>
         </div>
 
-        {visibleEvents.length >= DEMO_TIMELINE_EVENTS.length ? (
+        {visibleEvents.length >= eventsList.length ? (
           <button
             onClick={onCompleteStage}
-            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer self-start md:self-auto"
+            className="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-cyan-500 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer self-start md:self-auto uppercase tracking-wider"
           >
             <span>PROCEED TO INCIDENT RECONSTRUCTION SUMMARY</span>
             <ArrowRight className="w-4 h-4" />
@@ -48,7 +53,7 @@ export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimeline
         ) : (
           <div className="flex items-center gap-2 text-xs font-mono text-cyan-400">
             <Clock className="w-4 h-4 animate-spin" />
-            <span>Reconstructing Timeline [{visibleEvents.length}/{DEMO_TIMELINE_EVENTS.length}]</span>
+            <span>Reconstructing Timeline [{visibleEvents.length}/{eventsList.length}]</span>
           </div>
         )}
       </div>
@@ -58,7 +63,7 @@ export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimeline
         {visibleEvents.map((evt, idx) => {
           return (
             <div
-              key={evt.id}
+              key={evt.id || idx}
               className="relative animate-fade-in group"
             >
               {/* Timeline Bullet */}
@@ -76,7 +81,7 @@ export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimeline
                   <div className="flex items-center gap-2">
                     <span className="text-slate-500 font-bold">0{idx + 1}</span>
                     <span className="px-2 py-0.5 rounded bg-cyan-950 text-cyan-400 font-bold border border-cyan-800">
-                      {evt.time}
+                      {evt.time || '10:30'}
                     </span>
                     <h3 className="font-bold text-slate-100 text-sm font-sans">
                       {evt.title}
@@ -90,7 +95,7 @@ export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimeline
                       evt.severity === 'high' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
                       'bg-slate-800 text-slate-300'
                     }`}>
-                      {evt.severity}
+                      {evt.severity || 'INFO'}
                     </span>
                   </div>
                 </div>
@@ -116,7 +121,7 @@ export const StageIncidentTimeline = ({ onCompleteStage }: StageIncidentTimeline
       </div>
 
       {/* Completion Banner */}
-      {visibleEvents.length >= DEMO_TIMELINE_EVENTS.length && (
+      {visibleEvents.length >= eventsList.length && (
         <div className="p-4 bg-cyan-950/60 border border-cyan-500/60 rounded-xl text-xs font-mono text-cyan-300 flex flex-col sm:flex-row items-center justify-between gap-3 shadow-lg">
           <div className="flex items-center gap-2 font-bold text-sm">
             <CheckCircle2 className="w-5 h-5 text-emerald-400" />

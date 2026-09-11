@@ -8,21 +8,31 @@ import {
 } from 'lucide-react';
 import { CorrelationPipelineStatus } from '../Correlation/CorrelationPipelineStatus';
 import { GraphNode } from '../../types/vault';
+import { CorrelationLink } from '../../types/correlation';
 import { CORRELATION_LINKS } from '../../data/correlationEngine';
 import { DEMO_GRAPH_NODES } from '../../data/vaultDemoData';
 
 interface StageCorrelationGraphProps {
   onCompleteStage: () => void;
+  customNodes?: GraphNode[];
+  customLinks?: CorrelationLink[];
 }
 
-export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraphProps) => {
-  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(DEMO_GRAPH_NODES[0]);
-  const [selectedEdgeId, setSelectedEdgeId] = useState<string>('link-1');
+export const StageCorrelationGraph = ({
+  onCompleteStage,
+  customNodes,
+  customLinks
+}: StageCorrelationGraphProps) => {
+  const nodes = (customNodes && customNodes.length > 0) ? customNodes : DEMO_GRAPH_NODES;
+  const links = (customLinks && customLinks.length > 0) ? customLinks : CORRELATION_LINKS;
 
-  const selectedLink = CORRELATION_LINKS.find((l) => l.id === selectedEdgeId) || CORRELATION_LINKS[0];
+  const [selectedNode, setSelectedNode] = useState<GraphNode | null>(nodes[0] || null);
+  const [selectedEdgeId, setSelectedEdgeId] = useState<string>(links[0]?.id || 'link-1');
+
+  const selectedLink = links.find((l) => l.id === selectedEdgeId) || links[0];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 font-sans">
       {/* Real Pipeline Execution Visibility */}
       <CorrelationPipelineStatus />
 
@@ -38,14 +48,14 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
                 CLICK EDGES OR NODES TO INSPECT REASONING
               </span>
             </div>
-            <h2 className="text-xl font-bold text-slate-100 mt-1">
+            <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
               ECHO Discovered Evidence Cluster
             </h2>
           </div>
 
           <button
             onClick={onCompleteStage}
-            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer self-start md:self-auto"
+            className="flex items-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] cursor-pointer self-start md:self-auto uppercase tracking-wider"
           >
             <span>PROCEED TO TIMELINE RECONSTRUCTION</span>
             <ArrowRight className="w-4 h-4" />
@@ -63,7 +73,7 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
             {/* Canvas Top Controls */}
             <div className="relative z-10 flex justify-between items-center text-xs font-mono text-slate-400">
               <span className="flex items-center gap-1.5 text-cyan-400 font-bold">
-                <Network className="w-4 h-4" /> Multi-Source Evidence Cluster (8 Nodes • 6 Correlated Edges)
+                <Network className="w-4 h-4" /> Multi-Source Evidence Cluster ({nodes.length} Nodes • {links.length} Correlated Edges)
               </span>
               <span className="text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-0.5 rounded border border-emerald-800">
                 CLUSTER CONFIDENCE: 94%
@@ -81,9 +91,9 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
                   </linearGradient>
                 </defs>
 
-                {CORRELATION_LINKS.map((link) => {
-                  const srcNode = DEMO_GRAPH_NODES.find((n) => n.id === link.sourceNodeId);
-                  const tgtNode = DEMO_GRAPH_NODES.find((n) => n.id === link.targetNodeId);
+                {links.map((link) => {
+                  const srcNode = nodes.find((n) => n.id === link.sourceNodeId) || nodes[0];
+                  const tgtNode = nodes.find((n) => n.id === link.targetNodeId) || nodes[nodes.length - 1];
                   if (!srcNode || !tgtNode) return null;
 
                   const isSelected = selectedEdgeId === link.id;
@@ -91,10 +101,10 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
                   return (
                     <g key={link.id} className="pointer-events-auto cursor-pointer" onClick={() => setSelectedEdgeId(link.id)}>
                       <line
-                        x1={`${srcNode.x}%`}
-                        y1={`${srcNode.y}%`}
-                        x2={`${tgtNode.x}%`}
-                        y2={`${tgtNode.y}%`}
+                        x1={`${srcNode.x || 20}%`}
+                        y1={`${srcNode.y || 30}%`}
+                        x2={`${tgtNode.x || 80}%`}
+                        y2={`${tgtNode.y || 70}%`}
                         stroke={isSelected ? '#22d3ee' : 'url(#lineGradStage)'}
                         strokeWidth={isSelected ? '4' : '2'}
                         strokeDasharray={isSelected ? 'none' : '6 3'}
@@ -106,14 +116,16 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
               </svg>
 
               {/* Nodes */}
-              {DEMO_GRAPH_NODES.map((node) => {
+              {nodes.map((node, idx) => {
                 const isSelected = selectedNode?.id === node.id;
+                const nodeX = node.x || (15 + (idx * 25) % 70);
+                const nodeY = node.y || (20 + (idx * 20) % 60);
 
                 return (
                   <div
-                    key={node.id}
+                    key={node.id || idx}
                     onClick={() => setSelectedNode(node)}
-                    style={{ left: `${node.x}%`, top: `${node.y}%` }}
+                    style={{ left: `${nodeX}%`, top: `${nodeY}%` }}
                     className="absolute -translate-x-1/2 -translate-y-1/2 cursor-pointer transition-all duration-300 z-20 group"
                   >
                     <div className={`px-3 py-1.5 rounded-lg border font-mono text-xs font-bold shadow-xl flex items-center gap-1.5 transition-transform ${
@@ -138,7 +150,7 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
             {/* Edge Selector Buttons Bar */}
             <div className="relative z-10 pt-3 border-t border-dark-800 flex flex-wrap items-center gap-1.5 text-xs font-mono">
               <span className="text-slate-500 mr-1">EXPLICIT EDGES:</span>
-              {CORRELATION_LINKS.map((link, idx) => (
+              {links.map((link, idx) => (
                 <button
                   key={link.id}
                   onClick={() => setSelectedEdgeId(link.id)}
@@ -181,7 +193,7 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
                     EXACT MATCHING FACTORS IDENTIFIED
                   </span>
 
-                  {selectedLink.matchingFactors.map((factor, idx) => (
+                  {selectedLink.matchingFactors && selectedLink.matchingFactors.map((factor, idx) => (
                     <div key={idx} className="p-2.5 bg-dark-800 border border-dark-700 rounded-lg text-xs space-y-0.5">
                       <div className="font-bold text-cyan-300 flex items-center gap-1.5 font-mono">
                         <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
@@ -213,7 +225,7 @@ export const StageCorrelationGraph = ({ onCompleteStage }: StageCorrelationGraph
                   <span className="text-[10px] uppercase text-cyan-400 font-bold">{selectedNode.type}</span>
                 </div>
                 <p className="text-[11px] text-slate-400 font-sans leading-snug">
-                  {selectedNode.details}
+                  {selectedNode.details || 'Security entity extracted from telemetry.'}
                 </p>
               </div>
             )}

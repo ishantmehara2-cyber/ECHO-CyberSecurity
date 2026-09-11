@@ -152,6 +152,7 @@ export const EvidenceVault = () => {
     });
     setCurrentStage('idle');
     setAnalysisError(null);
+    setAnalysisData(null);
   };
 
   const handleStartInvestigation = async () => {
@@ -269,7 +270,7 @@ export const EvidenceVault = () => {
         <StageEntityExtraction
           onCompleteStage={() => setCurrentStage('discovery')}
           isDemoMode={isAllDemoFilesPresent && investigationMode === 'demo'}
-          totalParsedRecords={analysisData?.total_records || 2214}
+          totalParsedRecords={analysisData?.total_records}
           customEntities={analysisData?.extractedEntities}
         />
       )}
@@ -286,12 +287,14 @@ export const EvidenceVault = () => {
       {currentStage === 'correlation' && (
         <StageCorrelationGraph
           onCompleteStage={() => setCurrentStage('timeline')}
+          customLinks={analysisData?.correlations}
         />
       )}
 
       {currentStage === 'timeline' && (
         <StageIncidentTimeline
           onCompleteStage={() => setCurrentStage('reconstruction')}
+          customTimeline={analysisData?.timeline}
         />
       )}
 
@@ -305,7 +308,7 @@ export const EvidenceVault = () => {
       <InvestigationReportModal
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
-        selectedEntityName={selectedCandidate.entityName}
+        selectedEntityName={selectedCandidate?.entityName || 'Observed Entity'}
       />
 
       {/* Full Candidate Discovery Report Modal */}

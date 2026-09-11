@@ -6,28 +6,29 @@ interface TypedInvestigationStoryProps {
   onAnimationComplete?: () => void;
 }
 
-const DEFAULT_STORY_TEXT = `ECHO found a suspicious sequence of activity involving employee_07. The activity started with repeated failed login attempts from an external IP address (185.220.101.45). Shortly after a successful login, unusual commands were executed on WORKSTATION-07. The same session then accessed the finance_records.xlsx file and transferred data to an external destination (sync-archive.example.test). Based on the timing, user account, device activity and network connection, ECHO connected these events as part of one possible attack sequence.`;
+const DEFAULT_STORY_TEXT = `Upload telemetry evidence to begin investigation and reconstruct attack sequence across data silos.`;
 
 export const TypedInvestigationStory = ({
-  customText = DEFAULT_STORY_TEXT,
+  customText,
   onAnimationComplete
 }: TypedInvestigationStoryProps) => {
+  const storyText = customText || DEFAULT_STORY_TEXT;
+
   const [displayedText, setDisplayedText] = useState<string>('');
   const [isTyping, setIsTyping] = useState<boolean>(true);
   const hasAnimatedRef = useRef<boolean>(false);
 
   useEffect(() => {
-    // Prevent re-triggering animation if already completed
+    // Prevent re-triggering animation if already completed for same text
     if (hasAnimatedRef.current) {
-      setDisplayedText(customText);
+      setDisplayedText(storyText);
       setIsTyping(false);
       return;
     }
 
-    const words = customText.split(' ');
+    const words = storyText.split(' ');
     let currentWordIdx = 0;
 
-    // Total target duration ~5 seconds -> interval per word ~ 80ms
     const interval = setInterval(() => {
       if (currentWordIdx < words.length) {
         setDisplayedText(words.slice(0, currentWordIdx + 1).join(' '));
@@ -40,13 +41,13 @@ export const TypedInvestigationStory = ({
           onAnimationComplete();
         }
       }
-    }, 75);
+    }, 60);
 
     return () => clearInterval(interval);
-  }, [customText, onAnimationComplete]);
+  }, [storyText, onAnimationComplete]);
 
   return (
-    <div className="p-6 sm:p-8 bg-dark-900 border border-cyan-900/80 rounded-2xl shadow-2xl space-y-4 relative overflow-hidden">
+    <div className="p-6 sm:p-8 bg-dark-900 border border-cyan-900/80 rounded-2xl shadow-2xl space-y-4 relative overflow-hidden font-sans">
       {/* Top Header & Status */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-800 pb-3">
         <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider flex items-center gap-2">
