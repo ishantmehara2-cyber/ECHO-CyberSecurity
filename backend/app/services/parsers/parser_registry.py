@@ -40,3 +40,38 @@ def parse_and_classify_file(content: str, filename: str) -> Tuple[str, str, List
         source_detected = classify_event_source(parsed_events[0], filename)
 
     return format_detected, source_detected, parsed_events
+
+
+def parse_and_classify_file_with_diagnostics(
+    content: str, filename: str
+) -> Tuple[str, str, List[Dict[str, Any]], Dict[str, Any]]:
+    """Parse one upload without converting malformed structured data into fake events."""
+    diagnostics: Dict[str, Any] = {"warnings": [], "error": None}
+    if not content.strip():
+        diagnostics["error"] = "Uploaded file is empty."
+        return "UNKNOWN", "unknown", [], diagnostics
+
+    lower_name = filename.lower()
+    structured_suffixes = (".json", ".jsonl", ".ndjson", ".csv", ".xml", ".pdf")
+    for fmt_name, parser in PARSERS:
+        if not parser.can_parse(content, filename):
+            continue
+        try:
+            events = parser.parse(content, filename)
+        except Exception as exc:
+            diagnostics["error"] = f"{fmt_name} parsing failed: {exc}"
+            return fmt_name, "unknown", [], diagnostics
+        if events:
+            return fmt_name, classify_event_source(events[0], filename), events, diagnostics
+        if lower_name.endswith(structured_suffixes):
+            diagnostics["error"] = f"{fmt_name} contained no telemetry records."
+            return fmt_name, "unknown", [], diagnostics
+
+    if lower_name.endswith(structured_suffixes):
+        diagnostics["error"] = "No supported telemetry structure was detected."
+        return "UNKNOWN", "unknown", [], diagnostics
+    events = [{"raw_text": line, "description": line} for line in content.splitlines() if line.strip()]
+    if not events:
+        diagnostics["error"] = "No telemetry records were found."
+        return "TEXT", "unknown", [], diagnostics
+    return "TEXT", classify_event_source(events[0], filename), events, diagnostics

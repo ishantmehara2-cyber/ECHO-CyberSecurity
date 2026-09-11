@@ -1,6 +1,4 @@
 import { ShieldCheck } from 'lucide-react';
-import { INVESTIGATION_SUMMARY_STORY } from '../../data/correlationEngine';
-import { DETECTED_EVIDENCE_GAPS } from '../../data/gapDetectionEngine';
 import { TypedInvestigationStory } from './TypedInvestigationStory';
 
 interface InvestigationStoryNarrativeProps {
@@ -8,7 +6,7 @@ interface InvestigationStoryNarrativeProps {
 }
 
 export const InvestigationStoryNarrative = ({ customStory }: InvestigationStoryNarrativeProps) => {
-  const story = customStory || INVESTIGATION_SUMMARY_STORY;
+  const story = customStory || {};
 
   return (
     <div className="bg-dark-800 border border-cyan-500/60 rounded-xl p-6 shadow-2xl space-y-6 relative overflow-hidden font-sans">
@@ -30,7 +28,7 @@ export const InvestigationStoryNarrative = ({ customStory }: InvestigationStoryN
 
           <div className="px-4 py-2 bg-dark-900 border border-cyan-500/60 rounded-xl font-mono text-center shrink-0">
             <span className="text-slate-500 block text-[10px] uppercase font-bold">OVERALL CONFIDENCE</span>
-            <span className="text-emerald-400 font-extrabold text-lg">{story.overallConfidenceScore || 94}% HIGH</span>
+            <span className="text-emerald-400 font-extrabold text-lg">{story.overallConfidenceScore ?? 0}%</span>
           </div>
         </div>
 
@@ -38,32 +36,32 @@ export const InvestigationStoryNarrative = ({ customStory }: InvestigationStoryN
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono text-xs text-center">
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">CORRELATED EVENTS</span>
-            <span className="text-cyan-400 font-bold text-sm">{(story.totalCorrelatedEvents || 4).toLocaleString()}</span>
+            <span className="text-cyan-400 font-bold text-sm">{(story.totalCorrelatedEvents ?? 0).toLocaleString()}</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE EDGES</span>
-            <span className="text-purple-400 font-bold text-sm">{story.evidenceConnectionsCount || 2} Links</span>
+            <span className="text-purple-400 font-bold text-sm">{story.evidenceConnectionsCount ?? 0} Links</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE GAPS</span>
-            <span className="text-amber-400 font-bold text-sm">{DETECTED_EVIDENCE_GAPS.length} Detected</span>
+            <span className="text-amber-400 font-bold text-sm">{story.evidenceGapsCount ?? 0} Detected</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-dark-700 rounded-lg">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE COVERAGE</span>
-            <span className="text-emerald-400 font-bold text-sm">78% Complete</span>
+            <span className="text-emerald-400 font-bold text-sm">{story.coverageScore ?? 0}% Complete</span>
           </div>
 
           <div className="p-3 bg-dark-900 border border-cyan-800 rounded-lg">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">OVERALL VERDICT</span>
-            <span className="text-emerald-400 font-bold text-xs uppercase">CORRELATED ATTACK</span>
+            <span className="text-emerald-400 font-bold text-xs uppercase">{story.verdict || 'NO CONCLUSION'}</span>
           </div>
         </div>
 
         {/* ChatGPT-Style Typed Narrative Component */}
-        <TypedInvestigationStory customText={story.narrativeText} />
+        <TypedInvestigationStory customText={story.narrativeText || 'No investigation summary is available.'} />
 
         {/* Key Actor Map Grid */}
         {story.keyActors && (

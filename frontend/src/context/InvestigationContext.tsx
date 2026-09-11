@@ -14,12 +14,26 @@ interface InvestigationContextType {
 const InvestigationContext = createContext<InvestigationContextType | undefined>(undefined);
 
 export const InvestigationProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [analysisData, setAnalysisData] = useState<BackendAnalysisResult | null>(null);
+  const [analysisData, setAnalysisDataState] = useState<BackendAnalysisResult | null>(() => {
+    try {
+      const stored = sessionStorage.getItem('echo-analysis-result');
+      return stored ? JSON.parse(stored) as BackendAnalysisResult : null;
+    } catch {
+      sessionStorage.removeItem('echo-analysis-result');
+      return null;
+    }
+  });
   const [selectedCandidate, setSelectedCandidate] = useState<InvestigationCandidate | null>(null);
 
   const clearAnalysisData = () => {
     setAnalysisData(null);
     setSelectedCandidate(null);
+  };
+
+  const setAnalysisData = (data: BackendAnalysisResult | null) => {
+    setAnalysisDataState(data);
+    if (data) sessionStorage.setItem('echo-analysis-result', JSON.stringify(data));
+    else sessionStorage.removeItem('echo-analysis-result');
   };
 
   const hasAnalysisData = Boolean(analysisData && analysisData.total_records > 0);

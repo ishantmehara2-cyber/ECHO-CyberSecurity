@@ -1,18 +1,28 @@
 import { X, Printer, Users } from 'lucide-react';
-import { CANDIDATE_DISCOVERY_SUMMARY } from '../../data/candidateDiscoveryData';
 
 interface CandidateDiscoveryReportModalProps {
   isOpen: boolean;
   onClose: () => void;
+  candidates?: any[];
+  totalEvents?: number;
 }
 
 export const CandidateDiscoveryReportModal = ({
   isOpen,
-  onClose
+  onClose,
+  candidates = [],
+  totalEvents = 0
 }: CandidateDiscoveryReportModalProps) => {
   if (!isOpen) return null;
 
-  const summary = CANDIDATE_DISCOVERY_SUMMARY;
+  const summary = {
+    totalEventsAnalyzed: totalEvents,
+    uniqueEntitiesObserved: candidates.length,
+    totalCandidatesCount: candidates.length,
+    crossSourceCorrelationsCount: candidates.reduce((count, candidate) => count + (candidate.sourcesInvolved?.length || 0), 0),
+    candidates,
+    crossCandidatePatterns: [],
+  };
 
   const handlePrint = () => {
     window.print();
@@ -143,7 +153,7 @@ export const CandidateDiscoveryReportModal = ({
                 <div className="space-y-1 font-sans text-xs">
                   <strong className="font-mono text-[10px] text-slate-500 uppercase block">WHY FLAGGED:</strong>
                   <ul className="list-disc list-inside text-slate-300 space-y-0.5">
-                    {cand.whyFlagged.map((w, i) => (
+                    {cand.whyFlagged.map((w: string, i: number) => (
                       <li key={i}>{w}</li>
                     ))}
                   </ul>

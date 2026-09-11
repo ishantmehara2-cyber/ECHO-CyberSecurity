@@ -77,4 +77,29 @@ def extract_entities_from_events(events: List[NormalizedEvent]) -> List[Extracte
                     entity_map[key].sources.append(evt.source)
                 entity_map[key].lastSeen = evt.timestamp
 
+        for value, category, description in [
+            (evt.entity_domain, "domain", "Domain observed in telemetry"),
+            (evt.entity_session, "session", "Session observed in telemetry"),
+            (evt.entity_process, "process", "Process observed in telemetry"),
+            (evt.entity_hash, "hash", "Hash observed in telemetry"),
+            (evt.entity_url, "url", "URL observed in telemetry"),
+            (evt.entity_port, "port", "Network port observed in telemetry"),
+        ]:
+            if value:
+                key = f"{category}:{value}"
+                if key not in entity_map:
+                    entity_map[key] = ExtractedEntity(
+                        id=f"ent-{category}-{len(entity_map)}",
+                        name=value,
+                        category=category,
+                        sources=[evt.source],
+                        firstSeen=evt.timestamp,
+                        lastSeen=evt.timestamp,
+                        description=description,
+                    )
+                else:
+                    if evt.source not in entity_map[key].sources:
+                        entity_map[key].sources.append(evt.source)
+                    entity_map[key].lastSeen = evt.timestamp
+
     return list(entity_map.values())

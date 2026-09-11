@@ -1,15 +1,15 @@
 import { ShieldCheck, HelpCircle, FileCheck } from 'lucide-react';
-import { INVESTIGATION_SUMMARY_STORY } from '../../data/correlationEngine';
-import { COVERAGE_SUMMARY_METRICS } from '../../data/gapDetectionEngine';
 import { TypedInvestigationStory } from '../Correlation/TypedInvestigationStory';
+import { useInvestigation } from '../../context/InvestigationContext';
 
 interface ExecutiveOverviewProps {
   onOpenReportModal?: () => void;
 }
 
 export const ExecutiveOverview = ({ onOpenReportModal }: ExecutiveOverviewProps) => {
-  const story = INVESTIGATION_SUMMARY_STORY;
-  const coverage = COVERAGE_SUMMARY_METRICS;
+  const { analysisData } = useInvestigation();
+  const story = analysisData?.summary;
+  const coverage = analysisData?.confidence;
 
   return (
     <div className="bg-dark-800 border border-cyan-500/60 rounded-xl p-6 shadow-2xl space-y-6 relative overflow-hidden">
@@ -44,32 +44,32 @@ export const ExecutiveOverview = ({ onOpenReportModal }: ExecutiveOverviewProps)
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3 font-mono text-xs text-center">
           <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">OVERALL CONFIDENCE</span>
-            <span className="text-emerald-400 font-extrabold text-lg">{story.overallConfidenceScore}% HIGH</span>
+            <span className="text-emerald-400 font-extrabold text-lg">{story?.overallConfidenceScore ?? 0}%</span>
           </div>
 
           <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">CORRELATED EVENTS</span>
-            <span className="text-cyan-400 font-bold text-lg">{story.totalCorrelatedEvents.toLocaleString()}</span>
+            <span className="text-cyan-400 font-bold text-lg">{story?.totalCorrelatedEvents ?? 0}</span>
           </div>
 
           <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">EVIDENCE SILOS</span>
-            <span className="text-purple-400 font-bold text-lg">4 Sources</span>
+            <span className="text-purple-400 font-bold text-lg">{new Set((analysisData?.normalized_events || []).map((event: any) => event.source)).size} Sources</span>
           </div>
 
           <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">POSSIBLE GAPS</span>
-            <span className="text-amber-400 font-bold text-lg">{coverage.detectedGapsCount} Detected</span>
+            <span className="text-amber-400 font-bold text-lg">{analysisData?.evidence_gaps?.length ?? 0} Detected</span>
           </div>
 
           <div className="p-3.5 bg-dark-900 border border-cyan-800 rounded-xl">
             <span className="text-slate-500 text-[10px] block uppercase font-bold">COVERAGE SCORE</span>
-            <span className="text-emerald-400 font-bold text-lg">{coverage.overallCoverageScore}%</span>
+            <span className="text-emerald-400 font-bold text-lg">{coverage?.coverageScore ?? 0}%</span>
           </div>
         </div>
 
         {/* Typed Investigation Story Box */}
-        <TypedInvestigationStory customText={story.narrativeText} />
+        <TypedInvestigationStory customText={story?.narrativeText || 'No investigation summary is available.'} />
 
         {/* WHY THIS MATTERS Callout Banner */}
         <div className="p-4 bg-cyan-950/40 border border-cyan-500/60 rounded-xl text-xs text-slate-300 font-sans flex items-start gap-3">

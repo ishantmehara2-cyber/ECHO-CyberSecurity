@@ -11,7 +11,6 @@ import {
   ArrowRight
 } from 'lucide-react';
 import { ExtractedEntity } from '../../types/vault';
-import { DEMO_EXTRACTED_ENTITIES } from '../../data/vaultDemoData';
 
 interface StageEntityExtractionProps {
   onCompleteStage: () => void;
@@ -42,15 +41,11 @@ export const StageEntityExtraction = ({
     ? totalParsedRecords
     : (customEntities && customEntities.length > 0)
     ? customEntities.length
-    : isDemoMode
-    ? 2214
     : 0;
 
   const targetEntities = (customEntities && customEntities.length > 0)
     ? customEntities
-    : isDemoMode
-    ? DEMO_EXTRACTED_ENTITIES
-    : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
+    : [];
 
   console.log("STAGE ENTITY EXTRACTION PROPS:", {
     totalParsedRecords,
@@ -67,6 +62,8 @@ export const StageEntityExtraction = ({
   useEffect(() => {
     if (!targetEventCount || targetEventCount <= 0) {
       setCurrentRecord(0);
+      setStatus('complete');
+      setPipelinePhase('NO USABLE TELEMETRY');
       return;
     }
 

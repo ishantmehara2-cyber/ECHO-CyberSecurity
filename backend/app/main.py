@@ -31,13 +31,13 @@ def health_check():
 
 @app.post("/investigation/demo")
 def legacy_demo():
-    from app.services.pipeline import run_investigation_pipeline
-    return run_investigation_pipeline()
+    from app.api.investigation import run_demo_investigation
+    return run_demo_investigation()
 
 @app.post("/investigation/analyze")
 def legacy_analyze():
     from app.services.pipeline import run_investigation_pipeline
-    return run_investigation_pipeline()
+    return run_investigation_pipeline(custom_events=[])
 
 @app.get("/")
 def read_root():

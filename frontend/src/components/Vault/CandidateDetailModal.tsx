@@ -81,12 +81,24 @@ export const CandidateDetailModal = ({
               <ShieldAlert className="w-4 h-4" /> RISK SCORE BREAKDOWN ({candidate.riskScore}/100)
             </span>
             <div className="space-y-1.5 text-[11px]">
-              {candidate.riskBreakdown.map((r, i) => (
-                <div key={i} className="flex justify-between items-start text-slate-300">
-                  <span className="text-slate-400 truncate pr-2 font-sans">• {r.signal}</span>
-                  <span className="text-amber-400 font-bold shrink-0">+{r.points}</span>
-                </div>
-              ))}
+              {candidate.scoreBreakdown
+                ? Object.entries(candidate.scoreBreakdown).map(([key, category]) => (
+                    <div key={key} className="flex justify-between items-start text-slate-300">
+                      <span className="text-slate-400 truncate pr-2 font-sans">
+                        • {key.replace(/_/g, ' ')}
+                        <span className="text-slate-500"> ({category.evidence_count || 0} evidence)</span>
+                      </span>
+                      <span className="text-amber-400 font-bold shrink-0">
+                        +{category.points}/{category.max_points}
+                      </span>
+                    </div>
+                  ))
+                : candidate.riskBreakdown.map((r, i) => (
+                    <div key={i} className="flex justify-between items-start text-slate-300">
+                      <span className="text-slate-400 truncate pr-2 font-sans">• {r.factor || r.signal}</span>
+                      <span className="text-amber-400 font-bold shrink-0">+{r.points}</span>
+                    </div>
+                  ))}
             </div>
           </div>
 

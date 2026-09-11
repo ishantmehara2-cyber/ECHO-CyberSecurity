@@ -21,7 +21,7 @@ import {
   EvidenceClassification
 } from '../types/vault';
 import { InvestigationCandidate } from '../types/candidates';
-import { analyzeFiles } from '../services/investigationService';
+import { analyzeFiles, analyzeDemoFiles } from '../services/investigationService';
 import { useInvestigation } from '../context/InvestigationContext';
 import { AlertCircle, RefreshCw } from 'lucide-react';
 
@@ -168,14 +168,9 @@ export const EvidenceVault = () => {
     setCurrentStage('ingestion');
 
     try {
-      // Gather actual File objects or create fallback Blobs
-      const filesToUpload: File[] = activeFileList.map((f) => {
-        if (f.fileObject) return f.fileObject;
-        return new File([`Raw telemetry data for ${f.name}`], f.name, { type: 'text/plain' });
-      });
-
-      // Send actual POST request to http://127.0.0.1:8000/api/analyze
-      const result = await analyzeFiles(filesToUpload);
+      const result = investigationMode === 'demo'
+        ? await analyzeDemoFiles()
+        : await analyzeFiles(activeFileList.filter((f) => f.fileObject).map((f) => f.fileObject as File));
 
       console.log('ECHO ANALYZE RESPONSE:', result);
       console.log('TOTAL RECORDS:', result.total_records);
@@ -183,6 +178,9 @@ export const EvidenceVault = () => {
       console.log('EXTRACTED ENTITIES:', result.extractedEntities);
 
       setAnalysisData(result);
+      if (!result.success || result.total_records === 0) {
+        setAnalysisError('No usable telemetry records were found. Review the file diagnostics and upload valid telemetry.');
+      }
     } catch (err: any) {
       console.error('Investigation analysis API error:', err);
       setAnalysisError(err.message || 'Failed to connect to ECHO backend analysis API.');
@@ -315,12 +313,15 @@ export const EvidenceVault = () => {
         isOpen={isReportModalOpen}
         onClose={() => setIsReportModalOpen(false)}
         selectedEntityName={selectedCandidate?.entityName || 'Observed Entity'}
+        analysisData={analysisData}
       />
 
       {/* Full Candidate Discovery Report Modal */}
       <CandidateDiscoveryReportModal
         isOpen={isCandidateReportOpen}
         onClose={() => setIsCandidateReportOpen(false)}
+        candidates={analysisData?.suspicious_entities || []}
+        totalEvents={analysisData?.total_records || 0}
       />
 
       {/* Reset Confirmation Modal */}

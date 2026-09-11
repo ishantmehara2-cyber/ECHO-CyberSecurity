@@ -1,0 +1,4 @@
+[
+  {"timestamp":"2026-09-11T10:30:42Z","source":"endpoint","event":"PROCESS_EXECUTION","user":"demo_user","device":"DEMO-LAPTOP-07","session_id":"DEMO-SESSION-7F21","process_name":"powershell.exe -enc","severity":"high","description":"Encoded PowerShell execution"},
+  {"timestamp":"2026-09-11T10:34:09Z","source":"endpoint","event":"FILE_WRITE","user":"demo_user","device":"DEMO-LAPTOP-07","asset":"review_package.zip","process_name":"powershell.exe","severity":"high","description":"Staging archive created"}
+]

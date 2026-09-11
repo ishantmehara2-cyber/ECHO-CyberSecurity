@@ -6,16 +6,27 @@ import {
   ChevronRight,
   Info
 } from 'lucide-react';
-import { REPRESENTATIVE_100_EVENTS } from '../../data/normalizedTelemetryData';
+import { NormalizedTelemetryRecord } from '../../data/normalizedTelemetryData';
 
-export const NormalizedTelemetryTable = () => {
+export const NormalizedTelemetryTable = ({ events = [] }: { events?: any[] }) => {
   const [searchTerm, setSearchType] = useState<string>('');
   const [sourceFilter, setSourceFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
 
-  const filteredEvents = REPRESENTATIVE_100_EVENTS.filter((evt) => {
+  const records: NormalizedTelemetryRecord[] = events.map((event, index) => ({
+    id: event.id || `event-${index}`,
+    time: event.timestamp || 'Unknown',
+    source: event.source || 'unknown',
+    user: event.entity_user || '—',
+    host: event.entity_host || '—',
+    ip: event.entity_ip || '—',
+    eventType: event.eventType || 'security_activity',
+    status: event.severity === 'high' || event.severity === 'critical' ? 'Potentially suspicious' : 'Observed',
+    description: event.description || '',
+  }));
+  const filteredEvents = records.filter((evt) => {
     // Source filter
     if (sourceFilter !== 'all' && evt.source !== sourceFilter) return false;
     // Status filter
@@ -57,7 +68,7 @@ export const NormalizedTelemetryTable = () => {
         </div>
 
         <span className="text-xs font-mono px-3 py-1 bg-cyan-950 text-cyan-400 border border-cyan-800 rounded-lg font-bold">
-          100 REPRESENTATIVE EVENTS / 2,214 INGESTED
+          {records.length} NORMALIZED EVENTS
         </span>
       </div>
 
@@ -67,7 +78,7 @@ export const NormalizedTelemetryTable = () => {
         <div>
           <strong className="text-slate-100 font-mono text-xs uppercase block">THE NEED FOR CORRELATION:</strong>
           <span>
-            Out of thousands of routine corporate actions across hundreds of employees and hosts, suspicious events are hidden in plain sight. ECHO compares shared identities and timestamps across data silos to identify the few correlated events that actually matter.
+            Showing normalized records from the current investigation. ECHO compares shared identities and timestamps across data silos to identify the few correlated events that matter.
           </span>
         </div>
       </div>
@@ -173,7 +184,7 @@ export const NormalizedTelemetryTable = () => {
       {/* Pagination Footer */}
       <div className="flex flex-col sm:flex-row items-center justify-between gap-3 text-xs font-mono text-slate-400 border-t border-dark-700/60 pt-3">
         <span>
-          Showing {filteredEvents.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} filtered records (100 representative events)
+          Showing {filteredEvents.length === 0 ? 0 : (currentPage - 1) * itemsPerPage + 1} - {Math.min(currentPage * itemsPerPage, filteredEvents.length)} of {filteredEvents.length} filtered records
         </span>
 
         <div className="flex items-center gap-2">

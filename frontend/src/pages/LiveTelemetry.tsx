@@ -6,10 +6,12 @@ import { LiveEventStream } from '../components/Telemetry/LiveEventStream';
 import { NormalizationPreview } from '../components/Telemetry/NormalizationPreview';
 import { IntelligenceSummary } from '../components/Telemetry/IntelligenceSummary';
 import { NormalizedTelemetryTable } from '../components/Telemetry/NormalizedTelemetryTable';
-import { INITIAL_SOURCES, SYNTHETIC_TELEMETRY_DATA } from '../data/telemetryData';
+import { INITIAL_SOURCES } from '../data/telemetryData';
 import { TelemetryEvent, TelemetrySourceInfo, TelemetrySourceType, EventSeverity } from '../types/telemetry';
+import { useInvestigation } from '../context/InvestigationContext';
 
 export const LiveTelemetry = () => {
+  const { analysisData, hasAnalysisData } = useInvestigation();
   const [isStreaming, setIsStreaming] = useState<boolean>(false);
   const [isPaused, setIsPaused] = useState<boolean>(false);
   const [events, setEvents] = useState<TelemetryEvent[]>([]);
@@ -19,12 +21,29 @@ export const LiveTelemetry = () => {
   const [severityFilter, setSeverityFilter] = useState<EventSeverity | 'all'>('all');
 
   const streamIndexRef = useRef<number>(0);
+  const simulationDataRef = useRef<TelemetryEvent[]>([]);
 
   // Initialize with full dataset
   useEffect(() => {
-    setEvents(SYNTHETIC_TELEMETRY_DATA);
-    setSelectedEvent(SYNTHETIC_TELEMETRY_DATA[1]);
-  }, []);
+    const currentEvents = (analysisData?.normalized_events || []).map((event: any, index: number) => ({
+      id: event.id || `normalized-${index}`,
+      timestamp: event.timestamp || 'unknown',
+      rawTimestamp: event.timestamp || 'unknown',
+      source: event.source,
+      eventType: event.eventType,
+      title: event.eventType,
+      description: event.description,
+      severity: event.severity,
+      user: event.entity_user,
+      ip: event.entity_ip,
+      device: event.entity_host,
+      rawData: event.raw_source,
+      normalizedData: event,
+    } as TelemetryEvent));
+    setEvents(currentEvents);
+    simulationDataRef.current = currentEvents;
+    setSelectedEvent(currentEvents[0] || null);
+  }, [analysisData]);
 
   // Streaming timer
   useEffect(() => {
@@ -32,8 +51,8 @@ export const LiveTelemetry = () => {
 
     if (isStreaming && !isPaused) {
       interval = setInterval(() => {
-        if (streamIndexRef.current < SYNTHETIC_TELEMETRY_DATA.length) {
-          const nextEvent = SYNTHETIC_TELEMETRY_DATA[streamIndexRef.current];
+        if (streamIndexRef.current < simulationDataRef.current.length) {
+          const nextEvent = simulationDataRef.current[streamIndexRef.current];
 
           setEvents((prev) => {
             if (prev.some((e) => e.id === nextEvent.id)) return prev;
@@ -132,7 +151,11 @@ export const LiveTelemetry = () => {
       </div>
 
       {/* 6. Normalized Telemetry Registry (100 Representative Events Table) */}
-      <NormalizedTelemetryTable />
+      {hasAnalysisData ? <NormalizedTelemetryTable events={analysisData?.normalized_events} /> : (
+        <div className="p-8 text-center bg-dark-800 border border-dark-700 rounded-xl text-slate-400">
+          Upload telemetry in the Evidence Vault to view normalized events.
+        </div>
+      )}
     </div>
   );
 };

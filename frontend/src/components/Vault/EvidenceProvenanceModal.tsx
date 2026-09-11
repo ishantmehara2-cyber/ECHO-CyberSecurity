@@ -13,24 +13,11 @@ interface EvidenceProvenanceModalProps {
 export const EvidenceProvenanceModal = ({
   isOpen,
   onClose,
-  eventTitle = 'Failed Authentication Attempt',
-  sourceFile = '01_RAW_AUTHENTICATION_TELEMETRY.pdf',
-  rawRecord = {
-    login_user: 'employee_07',
-    src_ip: '185.220.101.45',
-    auth_service: 'PAM_NATIVE',
-    event: 'LOGIN_FAILED',
-    reason: 'INVALID_PASSWORD'
-  },
-  normalizedSchema = {
-    entity_user: 'employee_07',
-    entity_ip: '185.220.101.45',
-    entity_host: 'WORKSTATION-07',
-    event_type: 'authentication_failure',
-    source: 'authentication',
-    severity: 'medium'
-  },
-  correlationReasoning = 'Connected because user account employee_07 authenticated from external IP 185.220.101.45 within 2 minutes following multiple failed attempts.'
+  eventTitle = 'Selected Evidence',
+  sourceFile = 'Unknown source',
+  rawRecord = {},
+  normalizedSchema = {},
+  correlationReasoning = 'No correlation explanation is available for the selected evidence.'
 }: EvidenceProvenanceModalProps) => {
   if (!isOpen) return null;
 

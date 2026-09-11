@@ -1,0 +1,3 @@
+[
+  {"timestamp":"2026-09-11T10:32:28Z","source":"file","event":"FILE_READ","user":"demo_user","device":"DEMO-LAPTOP-07","asset":"finance_records.xlsx","severity":"high","description":"Restricted financial file read"}
+]

@@ -3,6 +3,19 @@ export type RiskLevel = 'CRITICAL' | 'HIGH' | 'MEDIUM-HIGH' | 'MEDIUM' | 'LOW';
 export interface CandidateScoreSignal {
   signal: string;
   points: number;
+  factor?: string;
+  evidence_count?: number;
+  evidenceCount?: number;
+  reason?: string;
+}
+
+export interface CandidateScoreCategory {
+  points: number;
+  max_points: number;
+  maxPoints?: number;
+  reason: string;
+  evidence_count?: number;
+  evidenceCount?: number;
 }
 
 export interface InvestigationCandidate {
@@ -20,6 +33,7 @@ export interface InvestigationCandidate {
   status: 'PRIORITY INVESTIGATION' | 'REVIEW RECOMMENDED' | 'NOMINAL OBSERVATION';
   whyFlagged: string[];
   riskBreakdown: CandidateScoreSignal[];
+  scoreBreakdown?: Record<string, CandidateScoreCategory>;
   confidenceBreakdown: CandidateScoreSignal[];
   keyActors: {
     primaryUser: string;

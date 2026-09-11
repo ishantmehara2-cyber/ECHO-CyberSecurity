@@ -1,12 +1,11 @@
 import { Sparkles, ShieldCheck } from 'lucide-react';
-import { DETECTED_EVIDENCE_GAPS } from '../../data/gapDetectionEngine';
 
 interface NextBestEvidencePanelProps {
   customGaps?: any[];
 }
 
 export const NextBestEvidencePanel = ({ customGaps }: NextBestEvidencePanelProps) => {
-  const gapsList = (customGaps && customGaps.length > 0) ? customGaps : DETECTED_EVIDENCE_GAPS;
+  const gapsList = customGaps || [];
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 shadow-xl space-y-5 font-sans">
@@ -29,6 +28,11 @@ export const NextBestEvidencePanel = ({ customGaps }: NextBestEvidencePanelProps
       </div>
 
       <div className="space-y-4">
+        {gapsList.length === 0 && (
+          <div className="p-6 text-center text-slate-400 border border-dark-700 rounded-xl">
+            No evidence collection gaps were identified for the current investigation.
+          </div>
+        )}
         {gapsList.map((gap, idx) => (
           <div key={gap.id || idx} className="bg-dark-900 border border-dark-700 rounded-xl p-5 space-y-3 font-mono text-xs">
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-800 pb-2">

@@ -11,8 +11,6 @@ import {
 import { CorrelationPipelineStatus } from '../Correlation/CorrelationPipelineStatus';
 import { GraphNode } from '../../types/vault';
 import { CorrelationLink } from '../../types/correlation';
-import { CORRELATION_LINKS } from '../../data/correlationEngine';
-import { DEMO_GRAPH_NODES } from '../../data/vaultDemoData';
 
 interface StageCorrelationGraphProps {
   onCompleteStage: () => void;
@@ -25,8 +23,8 @@ export const StageCorrelationGraph = ({
   customNodes,
   customLinks
 }: StageCorrelationGraphProps) => {
-  const nodes = (customNodes && customNodes.length > 0) ? customNodes : DEMO_GRAPH_NODES;
-  const links = (customLinks && customLinks.length > 0) ? customLinks : CORRELATION_LINKS;
+  const nodes = customNodes || [];
+  const links = customLinks || [];
 
   const [viewMode, setViewMode] = useState<'simplified' | 'full'>('simplified');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(nodes[0] || null);
@@ -214,7 +212,9 @@ export const StageCorrelationGraph = ({
                   <Network className="w-4 h-4" /> Multi-Source Evidence Cluster ({nodes.length} Nodes • {links.length} Edges)
                 </span>
                 <span className="text-emerald-400 font-bold bg-emerald-950/80 px-2.5 py-0.5 rounded border border-emerald-800">
-                  CLUSTER CONFIDENCE: 94%
+                  CLUSTER CONFIDENCE: {links.length
+                    ? Math.round(links.reduce((sum, link) => sum + link.confidenceScore, 0) / links.length)
+                    : 0}%
                 </span>
               </div>
 

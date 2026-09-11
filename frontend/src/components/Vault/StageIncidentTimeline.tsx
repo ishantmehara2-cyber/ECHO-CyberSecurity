@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Clock, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { TimelineEvent } from '../../types/vault';
-import { DEMO_TIMELINE_EVENTS } from '../../data/vaultDemoData';
 
 interface StageIncidentTimelineProps {
   onCompleteStage: () => void;
@@ -12,7 +11,7 @@ export const StageIncidentTimeline = ({
   onCompleteStage,
   customTimeline
 }: StageIncidentTimelineProps) => {
-  const eventsList = (customTimeline && customTimeline.length > 0) ? customTimeline : DEMO_TIMELINE_EVENTS;
+  const eventsList = customTimeline || [];
   const [visibleEvents, setVisibleEvents] = useState<TimelineEvent[]>([]);
 
   useEffect(() => {

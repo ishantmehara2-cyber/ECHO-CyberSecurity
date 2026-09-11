@@ -29,7 +29,7 @@ export const TelemetryHeader = ({
           {/* Badge */}
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
             <Sparkles className="w-3.5 h-3.5" />
-            <span>Simulated Live Telemetry — Synthetic Security Events</span>
+            <span>Telemetry Simulation — Current Investigation Events</span>
           </div>
 
           {/* Title */}
@@ -39,7 +39,7 @@ export const TelemetryHeader = ({
 
           {/* Subtitle */}
           <p className="text-slate-400 text-sm sm:text-base leading-relaxed">
-            Streaming heterogeneous logs from Endpoint, Network, Authentication, Application, and File systems into ECHO.
+            Simulated streaming view for demonstration using the current investigation's normalized events.
           </p>
         </div>
 
@@ -68,7 +68,7 @@ export const TelemetryHeader = ({
                 className="flex-1 sm:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-lg transition-all shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] cursor-pointer text-xs"
               >
                 <Play className="w-4 h-4 fill-slate-950" />
-                <span>RUN DEMO TELEMETRY</span>
+                <span>RUN TELEMETRY SIMULATION</span>
               </button>
             ) : isPaused ? (
               <button

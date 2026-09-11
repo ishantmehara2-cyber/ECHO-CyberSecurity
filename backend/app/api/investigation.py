@@ -4,7 +4,7 @@ from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from app.models.schemas import InvestigationResponse
 from app.services.pipeline import run_investigation_pipeline
-from app.services.parsers.parser_registry import parse_and_classify_file
+from app.services.parsers.parser_registry import parse_and_classify_file, parse_and_classify_file_with_diagnostics
 from app.services.candidate_ranker import rank_suspicious_candidates
 
 router = APIRouter(prefix="/api", tags=["evidence"])
@@ -22,13 +22,21 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
 
     files_processed_summary = []
     all_raw_events = []
+    diagnostics = {
+        "files_received": len(files),
+        "files_parsed": 0,
+        "files_failed": 0,
+        "parse_errors": [],
+        "warnings": [],
+        "no_parseable_events": False,
+    }
 
     for idx, file in enumerate(files):
         filename = file.filename or f"file_{idx+1}.log"
         content_bytes = await file.read()
         content_str = content_bytes.decode("utf-8", errors="ignore")
 
-        format_detected, source_detected, parsed_records = parse_and_classify_file(content_str, filename)
+        format_detected, source_detected, parsed_records, file_diagnostics = parse_and_classify_file_with_diagnostics(content_str, filename)
 
         print(f"PROCESSING FILE: {filename}", flush=True)
         print(f"DETECTED FORMAT: {format_detected}", flush=True)
@@ -40,7 +48,15 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
             "format": format_detected,
             "source_type": source_detected,
             "records_parsed": len(parsed_records)
+            ,"status": "SUCCESS" if parsed_records else "FAILED"
+            ,"error": file_diagnostics.get("error")
         })
+        if parsed_records:
+            diagnostics["files_parsed"] += 1
+        else:
+            diagnostics["files_failed"] += 1
+            if file_diagnostics.get("error"):
+                diagnostics["parse_errors"].append({"filename": filename, "error": file_diagnostics["error"]})
 
         for evt in parsed_records:
             if "source" not in evt:
@@ -52,7 +68,10 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
     print("====================================================\n", flush=True)
 
     # Pipeline Processing
-    pipeline_res = run_investigation_pipeline(custom_events=all_raw_events if len(all_raw_events) > 0 else None)
+    pipeline_res = run_investigation_pipeline(custom_events=all_raw_events)
+    diagnostics["no_parseable_events"] = len(all_raw_events) == 0
+    if diagnostics["no_parseable_events"]:
+        diagnostics["warnings"].append("No usable telemetry records were found.")
 
     # Dynamic Entity Extraction & Grouping
     categorized_entities = {
@@ -65,7 +84,7 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
     }
 
     # Dynamic Suspicious Entity Candidate Ranking
-    suspicious_entities = rank_suspicious_candidates(pipeline_res.normalizedEvents)
+    suspicious_entities = rank_suspicious_candidates(pipeline_res.normalizedEvents, pipeline_res.correlationLinks)
 
     return {
         "success": True,
@@ -83,6 +102,7 @@ async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
         },
         "evidence_gaps": [g.dict() for g in pipeline_res.evidenceGaps],
         "summary": pipeline_res.summary.dict()
+        ,"diagnostics": diagnostics
     }
 
 @router.post("/evidence/upload", response_model=Dict[str, Any])
@@ -178,12 +198,12 @@ def get_investigation_summary(inv_id: str):
 @router.get("/investigations/{inv_id}/candidates", response_model=List[Dict[str, Any]])
 def get_investigation_candidates(inv_id: str):
     res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
-    return rank_suspicious_candidates(res.normalizedEvents)
+    return rank_suspicious_candidates(res.normalizedEvents, res.correlationLinks)
 
 @router.get("/investigations/{inv_id}/candidates/{entity_id}", response_model=Dict[str, Any])
 def get_candidate_detail(inv_id: str, entity_id: str):
     res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
-    candidates = rank_suspicious_candidates(res.normalizedEvents)
+    candidates = rank_suspicious_candidates(res.normalizedEvents, res.correlationLinks)
     match = None
     for c in candidates:
         if c["entityName"] == entity_id:
@@ -194,10 +214,11 @@ def get_candidate_detail(inv_id: str, entity_id: str):
     return {
         "entityName": entity_id,
         "entityType": "identity",
-        "riskScore": 85,
-        "correlationConfidence": 90,
-        "status": "PRIORITY INVESTIGATION",
-        "whyFlagged": [f"Suspicious activity observed for {entity_id}"]
+        "riskScore": 0,
+        "correlationConfidence": 0,
+        "status": "NOMINAL OBSERVATION",
+        "primaryReason": "Insufficient evidence for reliable risk assessment",
+        "whyFlagged": ["No current investigation candidate matched this entity"]
     }
 
 @router.get("/investigations/{inv_id}/graph/{entity_id}", response_model=Dict[str, Any])
@@ -254,6 +275,27 @@ def get_deep_candidate_report(inv_id: str, entity_id: str):
     }
 
 # Compatibility alias for demo endpoint
-@router.post("/investigation/demo", response_model=InvestigationResponse)
+@router.post("/investigation/demo", response_model=Dict[str, Any])
 def run_demo_investigation():
-    return run_investigation_pipeline()
+    from pathlib import Path
+    import json
+    dataset_dir = Path(__file__).resolve().parents[3] / "datasets"
+    events = []
+    for path in sorted(dataset_dir.glob("demo_*.json")):
+        with path.open("r", encoding="utf-8") as handle:
+            events.extend(json.load(handle))
+    result = run_investigation_pipeline(custom_events=events)
+    return {
+        "investigationId": result.investigationId,
+        "timestamp": result.timestamp,
+        "silosLoadedCount": result.silosLoadedCount,
+        "totalRawEvents": result.totalRawEvents,
+        "coverageScore": result.coverageScore,
+        "normalizedEvents": [e.dict() for e in result.normalizedEvents],
+        "extractedEntities": [e.dict() for e in result.extractedEntities],
+        "suspicious_entities": rank_suspicious_candidates(result.normalizedEvents, result.correlationLinks),
+        "correlationLinks": [c.dict() for c in result.correlationLinks],
+        "attackStages": [s.dict() for s in result.attackStages],
+        "evidenceGaps": [g.dict() for g in result.evidenceGaps],
+        "summary": result.summary.dict(),
+    }

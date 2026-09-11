@@ -7,14 +7,15 @@ import { EvidenceGapCards } from '../Gaps/EvidenceGapCards';
 import { AskEchoSearch } from '../Search/AskEchoSearch';
 import { GapDetailModal } from '../Gaps/GapDetailModal';
 import { EvidenceGap } from '../../types/gap';
-import { DEMO_ATTACK_DNA } from '../../data/vaultDemoData';
 import { Dna } from 'lucide-react';
+import { useInvestigation } from '../../context/InvestigationContext';
 
 interface StageWowMomentProps {
   onOpenReportModal: () => void;
 }
 
 export const StageWowMoment = ({ onOpenReportModal }: StageWowMomentProps) => {
+  const { analysisData } = useInvestigation();
   const [activeTab, setActiveTab] = useState<ControlViewTab>('timeline');
   const [selectedGap, setSelectedGap] = useState<EvidenceGap | null>(null);
 
@@ -32,15 +33,15 @@ export const StageWowMoment = ({ onOpenReportModal }: StageWowMomentProps) => {
 
       {/* 3. Active View Based on Selected Control Tab */}
       {activeTab === 'timeline' && (
-        <AttackSequenceTimeline />
+        <AttackSequenceTimeline customStages={analysisData?.timeline || []} />
       )}
 
       {activeTab === 'graph' && (
-        <InteractiveCorrelationGraph />
+        <InteractiveCorrelationGraph customNodes={analysisData?.extractedEntities || []} customLinks={analysisData?.correlations || []} />
       )}
 
       {activeTab === 'gaps' && (
-        <EvidenceGapCards onSelectGap={setSelectedGap} />
+        <EvidenceGapCards onSelectGap={setSelectedGap} customGaps={analysisData?.evidence_gaps || []} />
       )}
 
       {activeTab === 'search' && (
@@ -66,7 +67,7 @@ export const StageWowMoment = ({ onOpenReportModal }: StageWowMomentProps) => {
           </p>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 font-mono text-xs">
-            {DEMO_ATTACK_DNA.map((dna, idx) => (
+            {(analysisData?.extractedEntities || []).map((dna: any, idx: number) => (
               <div
                 key={idx}
                 className="bg-dark-900 border border-purple-900/50 hover:border-cyan-500/80 rounded-xl p-3.5 flex flex-col justify-between transition-colors group"
@@ -79,7 +80,7 @@ export const StageWowMoment = ({ onOpenReportModal }: StageWowMomentProps) => {
                 </div>
 
                 <div className="text-sm font-bold text-slate-100 group-hover:text-cyan-300 transition-colors">
-                  {dna.value}
+                  {dna.name}
                 </div>
 
                 {dna.subtext && (

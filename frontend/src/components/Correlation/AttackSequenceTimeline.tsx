@@ -3,7 +3,6 @@ import {
   GitBranch,
   HelpCircle
 } from 'lucide-react';
-import { RECONSTRUCTED_ATTACK_STAGES } from '../../data/correlationEngine';
 import { AttackStageItem } from '../../types/correlation';
 
 interface AttackSequenceTimelineProps {
@@ -11,8 +10,8 @@ interface AttackSequenceTimelineProps {
 }
 
 export const AttackSequenceTimeline = ({ customStages }: AttackSequenceTimelineProps) => {
-  const stagesList = (customStages && customStages.length > 0) ? customStages : RECONSTRUCTED_ATTACK_STAGES;
-  const [selectedStage, setSelectedStage] = useState<AttackStageItem>(stagesList[0]);
+  const stagesList = customStages || [];
+  const [selectedStage, setSelectedStage] = useState<AttackStageItem | null>(stagesList[0] || null);
 
   return (
     <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl font-sans">
@@ -35,10 +34,16 @@ export const AttackSequenceTimeline = ({ customStages }: AttackSequenceTimelineP
         </span>
       </div>
 
+      {stagesList.length === 0 && (
+        <div className="p-8 text-center bg-dark-900 border border-dark-700 rounded-xl text-slate-400">
+          No reconstructed timeline is available for the current investigation.
+        </div>
+      )}
+
       {/* Horizontal Stage Selector Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-2 font-mono text-xs">
         {stagesList.map((stage) => {
-          const isSelected = selectedStage.stageNumber === stage.stageNumber;
+          const isSelected = selectedStage?.stageNumber === stage.stageNumber;
           return (
             <button
               key={stage.stageNumber}

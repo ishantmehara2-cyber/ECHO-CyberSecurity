@@ -1,7 +1,3 @@
-import { DEMO_EXTRACTED_ENTITIES } from '../data/vaultDemoData';
-import { CORRELATION_LINKS, RECONSTRUCTED_ATTACK_STAGES, INVESTIGATION_SUMMARY_STORY } from '../data/correlationEngine';
-import { DETECTED_EVIDENCE_GAPS, COVERAGE_SUMMARY_METRICS } from '../data/gapDetectionEngine';
-
 export interface BackendAnalysisResult {
   success: boolean;
   total_records: number;
@@ -92,19 +88,10 @@ export async function uploadEvidenceFile(file: File, siloKey?: string): Promise<
     console.warn('Backend upload unreachable, falling back to local metadata parsing:', error);
   }
 
-  // Local fallback response if backend offline
-  const ext = file.name.split('.').pop()?.toLowerCase() || 'log';
-  return {
-    success: true,
-    filename: file.name,
-    file_type: ext,
-    silo: siloKey || 'endpoint',
-    records_detected: Math.floor(Math.random() * 200) + 50,
-    status: 'ready_for_normalization'
-  };
+  throw new Error('Evidence upload service is unavailable. Start the ECHO backend and retry.');
 }
 
-export async function fetchInvestigationDemo(): Promise<ApiInvestigationResult> {
+export async function analyzeDemoFiles(): Promise<BackendAnalysisResult> {
   try {
     const response = await fetch(`${API_BASE_URL}/investigation/demo`, {
       method: 'POST',
@@ -116,25 +103,26 @@ export async function fetchInvestigationDemo(): Promise<ApiInvestigationResult> 
 
     if (response.ok) {
       const data = await response.json();
-      return data;
+      return {
+        success: true,
+        total_records: data.totalRawEvents,
+        files_processed: data.files_processed || [],
+        normalized_events: data.normalizedEvents,
+        entities: data.entities || {},
+        extractedEntities: data.extractedEntities,
+        suspicious_entities: data.suspicious_entities || [],
+        correlations: data.correlationLinks,
+        timeline: data.attackStages,
+        confidence: { overallScore: data.summary.overallConfidenceScore, coverageScore: data.coverageScore },
+        evidence_gaps: data.evidenceGaps,
+        summary: data.summary,
+      };
     }
   } catch (error) {
-    console.warn('Backend API unreachable, falling back to local deterministic pipeline data:', error);
+    console.warn('Backend demo API unreachable:', error);
   }
 
-  // Graceful Local Fallback Data Structure
-  return {
-    investigationId: `ECHO-LOCAL-${Date.now()}`,
-    timestamp: new Date().toISOString(),
-    silosLoadedCount: 4,
-    totalRawEvents: 2214,
-    coverageScore: COVERAGE_SUMMARY_METRICS.overallCoverageScore,
-    extractedEntities: DEMO_EXTRACTED_ENTITIES,
-    correlationLinks: CORRELATION_LINKS,
-    attackStages: RECONSTRUCTED_ATTACK_STAGES,
-    evidenceGaps: DETECTED_EVIDENCE_GAPS,
-    summary: INVESTIGATION_SUMMARY_STORY
-  };
+    throw new Error('Demo investigation service is unavailable. Start the ECHO backend and retry.');
 }
 
 export async function checkBackendHealth(): Promise<boolean> {

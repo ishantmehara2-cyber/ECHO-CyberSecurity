@@ -6,7 +6,6 @@ import {
   FileText
 } from 'lucide-react';
 import { InvestigationCandidate } from '../../types/candidates';
-import { CANDIDATE_DISCOVERY_SUMMARY } from '../../data/candidateDiscoveryData';
 import { CandidateDetailModal } from './CandidateDetailModal';
 
 interface CandidateDiscoveryViewProps {
@@ -22,13 +21,9 @@ export const CandidateDiscoveryView = ({
   customCandidates,
   totalEventsAnalyzed
 }: CandidateDiscoveryViewProps) => {
-  const defaultSummary = CANDIDATE_DISCOVERY_SUMMARY;
-  const candidatesList = (customCandidates && customCandidates.length > 0)
-    ? customCandidates
-    : defaultSummary.candidates;
-
-  const totalEvents = totalEventsAnalyzed || defaultSummary.totalEventsAnalyzed;
-  const uniqueEntitiesCount = candidatesList.length * 3 + 2;
+  const candidatesList = customCandidates || [];
+  const totalEvents = totalEventsAnalyzed || 0;
+  const uniqueEntitiesCount = candidatesList.length;
 
   const [selectedModalCandidate, setSelectedModalCandidate] = useState<InvestigationCandidate | null>(null);
 
@@ -79,13 +74,13 @@ export const CandidateDiscoveryView = ({
         <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">HIGH-RISK CANDIDATES</span>
           <span className="text-amber-400 font-bold text-base">
-            {candidatesList.filter(c => c.riskLevel === 'HIGH' || c.riskScore >= 80).length || 1}
+            {candidatesList.filter(c => c.riskLevel === 'HIGH' || c.riskScore >= 80).length}
           </span>
         </div>
 
         <div className="p-3.5 bg-dark-900 border border-cyan-800 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">CORRELATIONS FOUND</span>
-          <span className="text-emerald-400 font-bold text-base">{candidatesList.length * 2} Edges</span>
+          <span className="text-emerald-400 font-bold text-base">{candidatesList.reduce((total, candidate) => total + (candidate.sourcesInvolved?.length || 0), 0)} Events</span>
         </div>
       </div>
 
@@ -102,6 +97,11 @@ export const CandidateDiscoveryView = ({
 
       {/* Candidates List / Cards */}
       <div className="space-y-4">
+        {candidatesList.length === 0 && (
+          <div className="p-8 text-center bg-dark-900 border border-dark-700 rounded-xl text-slate-400">
+            No high-confidence suspicious entities were identified in the uploaded telemetry.
+          </div>
+        )}
         {candidatesList.map((cand, idx) => (
           <div
             key={cand.id || `cand-${idx}`}

@@ -1,41 +1,49 @@
 from typing import List
+
 from app.models.schemas import NormalizedEvent, AttackStage
+from app.services.correlation_engine import parse_event_timestamp
+
+
+def classify_stage(event: NormalizedEvent) -> tuple[str, str, str]:
+    text = f"{event.eventType} {event.description} {event.entity_process or ''} {event.entity_asset or ''}".lower()
+    if any(word in text for word in ("archive", "zip", "compress", "stage")):
+        return "Collection / Staging Activity", "INFERRED", "Archive or staging indicator was observed"
+    if any(word in text for word in ("process", "execution", "powershell", "cmd", "bash", "script", "exec")):
+        return "Execution Activity", "OBSERVED", "Process or command execution indicator was observed"
+    if any(word in text for word in ("file", "read", "write", "access", "document", "asset")):
+        return "File / Data Activity", "OBSERVED", "File or asset activity was observed"
+    if any(word in text for word in ("egress", "outbound", "transfer", "connection", "dns", "http", "network")):
+        if any(word in text for word in ("bytes", "transfer", "exfil")):
+            return "Possible Exfiltration", "INFERRED", "Outbound transfer evidence was observed"
+        return "Network Activity", "OBSERVED", "Network activity was observed"
+    if any(word in text for word in ("auth", "login", "logon", "session", "credential")):
+        return "Authentication / Access Activity", "OBSERVED", "Authentication or access activity was observed"
+    return "Unclassified Security Activity", "OBSERVED", "The event was retained but did not match a stronger stage classifier"
+
 
 def reconstruct_attack_timeline(events: List[NormalizedEvent]) -> List[AttackStage]:
-    # Sort events by timestamp string
-    sorted_events = sorted(events, key=lambda e: e.timestamp)
-    stages = []
-
-    stage_names = [
-        "Initial Activity / Entry",
-        "Suspicious Access",
-        "Endpoint Execution Activity",
-        "Data Access & Collection",
-        "Staging & Packaging",
-        "Network Communication & Exfiltration"
-    ]
-
-    for idx, evt in enumerate(sorted_events[:6]):
-        stage_title = stage_names[idx] if idx < len(stage_names) else f"Stage {idx+1} Activity"
-        
+    timestamped = [(parse_event_timestamp(event.timestamp), index, event) for index, event in enumerate(events)]
+    sorted_events = sorted(timestamped, key=lambda item: (item[0] is None, item[0] or item[1]))
+    stages: List[AttackStage] = []
+    for index, (parsed_time, _, event) in enumerate(sorted_events):
+        stage_name, status, reason = classify_stage(event)
+        confidence = 82 if parsed_time else 55
         stages.append(AttackStage(
-            stageNumber=idx + 1,
-            stageName=stage_title,
-            timestamp=evt.timestamp,
-            source=evt.source,
-            eventTitle=evt.description,
-            entity=evt.entity_user or evt.entity_process or "Unknown Entity",
-            ipOrDevice=evt.entity_host or evt.entity_ip or "System",
-            severity=evt.severity,
-            riskLevel=evt.severity.upper() if evt.severity in ["critical", "high"] else "MODERATE",
-            connectionExplanation=f"Connected because event occurred sequentially on {evt.source} involving {evt.entity_user or evt.entity_host}.",
-            confidenceScore=88 + (idx % 8),
+            stageNumber=index + 1,
+            stageName=stage_name,
+            timestamp=event.timestamp,
+            source=event.source,
+            eventTitle=event.description or event.eventType,
+            entity=event.entity_user or event.entity_process or event.entity_host or "Observed Entity",
+            ipOrDevice=event.entity_host or event.entity_ip or "Observed Indicator",
+            severity=event.severity,
+            riskLevel=event.severity.upper() if event.severity in {"critical", "high"} else "MODERATE",
+            connectionExplanation=reason,
+            confidenceScore=confidence,
             confidenceReasons=[
-                f"Verified timestamp {evt.timestamp}",
-                f"Source match: {evt.source}",
-                f"Entity anchor: {evt.entity_user or evt.entity_host}"
+                reason,
+                "Timestamp parsed and used for ordering" if parsed_time else "Timestamp could not be reliably parsed; original order preserved",
             ],
-            statusType="OBSERVED"
+            statusType=status,
         ))
-
     return stages

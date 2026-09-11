@@ -1,153 +1,30 @@
-import { X, Printer, FileText, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { DEMO_ATTACK_DNA, DEMO_TIMELINE_EVENTS } from '../../data/vaultDemoData';
+import { X } from 'lucide-react';
 
 interface InvestigationReportModalProps {
   isOpen: boolean;
   onClose: () => void;
   selectedEntityName?: string;
+  analysisData?: any;
 }
 
-export const InvestigationReportModal = ({
-  isOpen,
-  onClose,
-  selectedEntityName = 'employee_07'
-}: InvestigationReportModalProps) => {
+export const InvestigationReportModal = ({ isOpen, onClose, selectedEntityName, analysisData }: InvestigationReportModalProps) => {
   if (!isOpen) return null;
-
-  const handlePrint = () => {
-    window.print();
-  };
-
+  const summary = analysisData?.summary;
+  const stages = analysisData?.timeline || [];
+  const gaps = analysisData?.evidence_gaps || [];
+  const entities = analysisData?.extractedEntities || [];
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 overflow-y-auto animate-fade-in font-sans">
-      <div className="bg-dark-900 border border-cyan-500/60 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden relative">
-        {/* Modal Header */}
-        <div className="p-6 bg-dark-800 border-b border-dark-700 flex items-center justify-between shrink-0">
-          <div className="flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-cyan-950 text-cyan-400 border border-cyan-800 font-mono">
-              <FileText className="w-6 h-6" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-mono font-bold text-cyan-400 uppercase">
-                  DEEP INVESTIGATION REPORT // {selectedEntityName.toUpperCase()}
-                </span>
-                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800 font-bold">
-                  CONFIDENCE: 94%
-                </span>
-              </div>
-              <h2 className="text-xl font-bold text-slate-100 font-mono">
-                INCIDENT REPORT #ECHO-2026-0911-01
-              </h2>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <button
-              onClick={handlePrint}
-              className="flex items-center gap-2 px-3 py-1.5 bg-dark-700 hover:bg-dark-600 text-slate-200 rounded-lg text-xs font-mono border border-dark-600 cursor-pointer"
-            >
-              <Printer className="w-4 h-4" />
-              <span>Print / Export PDF</span>
-            </button>
-
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg bg-dark-800 text-slate-400 hover:text-slate-100 border border-dark-700 cursor-pointer"
-            >
-              <X className="w-5 h-5" />
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+      <div className="bg-dark-900 border border-cyan-500/60 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+        <div className="p-6 bg-dark-800 border-b border-dark-700 flex items-center justify-between">
+          <div><span className="text-xs font-mono font-bold text-cyan-400 uppercase">GENERATED FROM CURRENT INVESTIGATION DATA</span><h2 className="text-xl font-bold text-slate-100 font-mono">ECHO INVESTIGATION REPORT</h2></div>
+          <div className="flex gap-2"><button onClick={() => window.print()} className="px-3 py-1.5 bg-dark-700 text-slate-200 rounded-lg text-xs font-mono">Print / Export</button><button onClick={onClose} className="p-1.5 bg-dark-800 text-slate-400 border border-dark-700 rounded-lg"><X className="w-5 h-5" /></button></div>
         </div>
-
-        {/* Modal Scrollable Body */}
-        <div className="p-6 overflow-y-auto space-y-6 text-slate-300 font-sans text-sm leading-relaxed">
-          {/* Executive Summary */}
-          <div className="p-4 bg-dark-800 border border-dark-700 rounded-xl space-y-2">
-            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
-              1. EXECUTIVE SUMMARY
-            </h3>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              ECHO automated correlation analysis processed <strong className="text-cyan-300">2,214 raw telemetry events</strong> across 4 independent evidence streams for candidate <strong className="text-purple-300 font-mono">{selectedEntityName}</strong>. A high-confidence (<strong>94%</strong>) multi-stage attack sequence was reconstructed linking account compromise, endpoint execution, financial asset collection, local archiving, and encrypted exfiltration.
-            </p>
-          </div>
-
-          {/* Key Entities & Attack DNA Table */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
-              2. KEY CORRELATED ENTITIES (ATTACK DNA)
-            </h3>
-
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 font-mono text-xs">
-              {DEMO_ATTACK_DNA.map((item, idx) => (
-                <div key={idx} className="p-2.5 bg-dark-800 border border-dark-700 rounded-lg">
-                  <span className="text-[10px] text-slate-500 block uppercase font-bold">{item.category}</span>
-                  <span className="text-slate-200 font-bold block mt-0.5">{item.value}</span>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Timeline Summary */}
-          <div className="space-y-3">
-            <h3 className="text-xs font-mono font-bold text-cyan-400 uppercase tracking-wider">
-              3. RECONSTRUCTED INCIDENT TIMELINE
-            </h3>
-
-            <div className="bg-dark-800 border border-dark-700 rounded-xl p-4 space-y-2 font-mono text-xs">
-              {DEMO_TIMELINE_EVENTS.map((evt) => (
-                <div key={evt.id} className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-dark-700/60 pb-2 last:border-0">
-                  <div className="flex items-center gap-2">
-                    <span className="text-cyan-400 font-bold">{evt.time}</span>
-                    <span className="text-slate-200 font-bold">{evt.title}</span>
-                  </div>
-                  <div className="text-slate-400 text-[11px]">
-                    {evt.entity} ({evt.ipOrHost})
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Risk Assessment & Recommendations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="p-4 bg-dark-800 border border-dark-700 rounded-xl space-y-2">
-              <h3 className="text-xs font-mono font-bold text-amber-400 uppercase tracking-wider flex items-center gap-1.5">
-                <AlertTriangle className="w-4 h-4" /> 4. RISK & IMPACT ASSESSMENT
-              </h3>
-              <p className="text-xs text-slate-300 leading-relaxed">
-                Potential exfiltration of restricted financial assets (<code className="text-amber-300 font-mono">finance_records.xlsx</code>) totaling 148 MB transferred to external IP <code className="text-amber-300 font-mono">198.51.100.77</code>. Account <code className="text-cyan-300 font-mono">{selectedEntityName}</code> displays indicators of credential compromise.
-              </p>
-            </div>
-
-            <div className="p-4 bg-dark-800 border border-dark-700 rounded-xl space-y-2">
-              <h3 className="text-xs font-mono font-bold text-emerald-400 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="w-4 h-4" /> 5. RECOMMENDED NEXT ACTIONS
-              </h3>
-              <ul className="text-xs text-slate-300 space-y-1 list-disc list-inside">
-                <li>Preserve memory & disk forensic image of WORKSTATION-07.</li>
-                <li>Reset credentials & revoke active SSO session <code className="text-cyan-300 font-mono">SES-7F21A</code> for {selectedEntityName}.</li>
-                <li>Block destination IP <code className="text-cyan-300 font-mono">198.51.100.77</code> on perimeter firewalls.</li>
-                <li>Conduct data exposure assessment for finance_records.xlsx.</li>
-                <li>Escalate ticket for Tier-2 SOC Analyst formal review.</li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Professional Analyst Disclaimer */}
-          <div className="p-3 bg-dark-800/80 border border-dark-700 rounded-lg text-[11px] font-mono text-slate-500">
-            <strong>Analyst Disclaimer:</strong> ECHO provided automated multi-source hypothesis correlation based on ingested evidence files. Potentially correlated incident sequence detected with high-confidence hypothesis. Human analyst review recommended prior to formal remediation actions.
-          </div>
-        </div>
-
-        {/* Modal Footer */}
-        <div className="p-4 bg-dark-800 border-t border-dark-800 flex justify-end">
-          <button
-            onClick={onClose}
-            className="px-5 py-2 bg-cyan-600 hover:bg-cyan-500 text-slate-950 font-bold rounded-lg text-xs font-mono transition-colors cursor-pointer uppercase"
-          >
-            Close Report
-          </button>
+        <div className="p-6 overflow-y-auto space-y-5 text-slate-300 text-sm">
+          <section className="p-4 bg-dark-800 border border-dark-700 rounded-xl"><h3 className="text-xs font-mono text-cyan-400 uppercase">Summary</h3><p className="mt-2">{summary?.narrativeText || 'No investigation summary is available.'}</p><p className="mt-2 text-xs text-slate-400">Records: {analysisData?.total_records || 0} · Confidence: {analysisData?.confidence?.overallScore ?? 0}% · Coverage: {analysisData?.confidence?.coverageScore ?? 0}% · Selected entity: {selectedEntityName || 'None'}</p></section>
+          <section><h3 className="text-xs font-mono text-cyan-400 uppercase mb-2">Key Entities</h3><div className="flex flex-wrap gap-2">{entities.map((entity: any) => <span key={entity.id} className="px-2 py-1 bg-dark-800 border border-dark-700 rounded text-xs">{entity.category}: {entity.name}</span>)}</div></section>
+          <section><h3 className="text-xs font-mono text-cyan-400 uppercase mb-2">Timeline</h3>{stages.length ? stages.map((stage: any) => <div key={stage.stageNumber} className="p-3 bg-dark-800 border-b border-dark-700 text-xs"><span className="text-cyan-400">{stage.timestamp}</span> · {stage.stageName} · {stage.eventTitle}</div>) : <p className="text-slate-500">No timeline evidence available.</p>}</section>
+          <section><h3 className="text-xs font-mono text-cyan-400 uppercase mb-2">Evidence Gaps</h3>{gaps.length ? gaps.map((gap: any) => <div key={gap.id} className="p-3 bg-dark-800 border border-dark-700 rounded text-xs">{gap.id}: {gap.whyFlagged}</div>) : <p className="text-slate-500">No evidence gaps identified.</p>}</section>
         </div>
       </div>
     </div>

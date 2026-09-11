@@ -1,5 +1,4 @@
 import { AlertTriangle, HelpCircle, ArrowRight } from 'lucide-react';
-import { DETECTED_EVIDENCE_GAPS } from '../../data/gapDetectionEngine';
 import { EvidenceGap } from '../../types/gap';
 
 interface EvidenceGapCardsProps {
@@ -8,7 +7,7 @@ interface EvidenceGapCardsProps {
 }
 
 export const EvidenceGapCards = ({ onSelectGap, customGaps }: EvidenceGapCardsProps) => {
-  const gapsList = (customGaps && customGaps.length > 0) ? customGaps : DETECTED_EVIDENCE_GAPS;
+  const gapsList = customGaps || [];
 
   return (
     <div className="space-y-4 font-sans">
@@ -22,6 +21,11 @@ export const EvidenceGapCards = ({ onSelectGap, customGaps }: EvidenceGapCardsPr
         </span>
       </div>
 
+      {gapsList.length === 0 && (
+        <div className="p-6 bg-dark-800 border border-dark-700 rounded-xl text-slate-400 text-sm">
+          No evidence gaps were identified from the current investigation data.
+        </div>
+      )}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {gapsList.map((gap, idx) => (
           <div

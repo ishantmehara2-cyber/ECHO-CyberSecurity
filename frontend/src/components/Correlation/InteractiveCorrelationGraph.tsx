@@ -10,8 +10,6 @@ import {
 } from 'lucide-react';
 import { GraphNode } from '../../types/vault';
 import { CorrelationLink } from '../../types/correlation';
-import { DEMO_GRAPH_NODES } from '../../data/vaultDemoData';
-import { CORRELATION_LINKS } from '../../data/correlationEngine';
 
 interface InteractiveCorrelationGraphProps {
   customNodes?: any[];
@@ -24,12 +22,12 @@ interface InteractiveCorrelationGraphProps {
 export const InteractiveCorrelationGraph = ({
   customNodes,
   customLinks,
-  totalRecords = 2214,
-  confidenceScore = 94,
+  totalRecords = 0,
+  confidenceScore = 0,
   summaryData
 }: InteractiveCorrelationGraphProps) => {
-  const nodes: GraphNode[] = (customNodes && customNodes.length > 0) ? customNodes : DEMO_GRAPH_NODES;
-  const links: CorrelationLink[] = (customLinks && customLinks.length > 0) ? customLinks : CORRELATION_LINKS;
+  const nodes: GraphNode[] = customNodes || [];
+  const links: CorrelationLink[] = customLinks || [];
 
   const [viewMode, setViewMode] = useState<'simplified' | 'full'>('simplified');
   const [selectedNode, setSelectedNode] = useState<GraphNode | null>(nodes[0] || null);
@@ -39,9 +37,9 @@ export const InteractiveCorrelationGraph = ({
   const primaryPathNodes = nodes.slice(0, 6);
 
   const keyActors = summaryData?.keyActors || {
-    primaryUser: nodes.find(n => n.type === 'identity')?.label || 'Observed User',
-    primaryHost: nodes.find(n => n.type === 'endpoint')?.label || 'Observed Host',
-    entryIp: nodes.find(n => n.type === 'ip')?.label || '10.0.1.15'
+    primaryUser: nodes.find(n => n.type === 'identity')?.label || '—',
+    primaryHost: nodes.find(n => n.type === 'endpoint')?.label || '—',
+    entryIp: nodes.find(n => n.type === 'ip')?.label || '—'
   };
 
   return (
@@ -55,7 +53,7 @@ export const InteractiveCorrelationGraph = ({
 
         <div className="p-3 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">EVENTS CORRELATED</span>
-          <span className="text-purple-300 font-bold text-base">{links.length * 3 + 2}</span>
+          <span className="text-purple-300 font-bold text-base">{links.length}</span>
         </div>
 
         <div className="p-3 bg-dark-900 border border-dark-700 rounded-xl">
@@ -75,7 +73,7 @@ export const InteractiveCorrelationGraph = ({
 
         <div className="p-3 bg-dark-900 border border-cyan-800 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">RISK ASSESSMENT</span>
-          <span className="text-amber-400 font-bold text-xs uppercase">HIGH RISK</span>
+          <span className="text-amber-400 font-bold text-xs uppercase">{links.length ? 'REVIEW' : 'NO FINDING'}</span>
         </div>
       </div>
 

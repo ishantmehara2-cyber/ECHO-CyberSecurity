@@ -1,0 +1,3 @@
+[
+  {"timestamp":"2026-09-11T10:36:19Z","source":"network","event":"HTTP_EGRESS","user":"demo_user","device":"DEMO-LAPTOP-07","ip":"198.51.100.77","domain":"demo-external.example","bytes":"148000000","severity":"critical","description":"148 MB outbound data transfer"}
+]

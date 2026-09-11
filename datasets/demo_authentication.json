@@ -1,0 +1,4 @@
+[
+  {"timestamp":"2026-09-11T10:28:43Z","source":"authentication","event":"AUTH_FAILURE","user":"demo_user","ip":"203.0.113.45","device":"DEMO-LAPTOP-07","severity":"medium","description":"Failed authentication attempt"},
+  {"timestamp":"2026-09-11T10:30:16Z","source":"authentication","event":"AUTH_SUCCESS","user":"demo_user","ip":"203.0.113.45","device":"DEMO-LAPTOP-07","session_id":"DEMO-SESSION-7F21","severity":"high","description":"Successful SSO logon"}
+]

@@ -18,6 +18,10 @@ class NormalizedEvent(BaseModel):
     entity_asset: Optional[str] = None
     entity_process: Optional[str] = None
     entity_session: Optional[str] = None
+    entity_domain: Optional[str] = None
+    entity_hash: Optional[str] = None
+    entity_url: Optional[str] = None
+    entity_port: Optional[str] = None
     severity: str
     description: str
     raw_source: Dict[str, Any]
@@ -103,3 +107,4 @@ class InvestigationResponse(BaseModel):
     attackStages: List[AttackStage]
     evidenceGaps: List[EvidenceGap]
     summary: InvestigationSummary
+    diagnostics: Optional[Dict[str, Any]] = None
