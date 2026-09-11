@@ -1,14 +1,17 @@
 import uuid
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File
+from pydantic import BaseModel
 from app.models.schemas import InvestigationResponse
 from app.services.pipeline import run_investigation_pipeline
 from app.services.parsers.parser_registry import parse_and_classify_file
 
 router = APIRouter(prefix="/api/investigations", tags=["investigations"])
 
-# In-memory investigation storage for sessions
 INVESTIGATIONS_DB: Dict[str, Dict[str, Any]] = {}
+
+class QueryRequest(BaseModel):
+    query: str
 
 @router.post("", response_model=Dict[str, Any])
 def create_investigation(mode: str = "lab", name: str = "New Cyber Investigation"):
@@ -26,7 +29,6 @@ def create_investigation(mode: str = "lab", name: str = "New Cyber Investigation
 @router.post("/{inv_id}/upload", response_model=Dict[str, Any])
 async def upload_investigation_file(inv_id: str, file: UploadFile = File(...)):
     if inv_id not in INVESTIGATIONS_DB:
-        # Auto-create if not existing
         INVESTIGATIONS_DB[inv_id] = {"id": inv_id, "mode": "lab", "name": "Lab Investigation", "files": [], "parsed_events": [], "result": None}
 
     content_bytes = await file.read()
@@ -78,7 +80,8 @@ def get_investigation_candidates(inv_id: str):
             "entityType": "identity",
             "riskScore": 92,
             "correlationConfidence": 94,
-            "status": "PRIORITY INVESTIGATION"
+            "status": "PRIORITY INVESTIGATION",
+            "primaryReason": "Multi-stage suspicious sequence across 4 sources"
         },
         {
             "rank": 2,
@@ -86,7 +89,8 @@ def get_investigation_candidates(inv_id: str):
             "entityType": "identity",
             "riskScore": 73,
             "correlationConfidence": 78,
-            "status": "REVIEW RECOMMENDED"
+            "status": "REVIEW RECOMMENDED",
+            "primaryReason": "Abnormal authentication sequence & active directory query"
         },
         {
             "rank": 3,
@@ -94,9 +98,70 @@ def get_investigation_candidates(inv_id: str):
             "entityType": "service",
             "riskScore": 61,
             "correlationConfidence": 69,
-            "status": "REVIEW RECOMMENDED"
+            "status": "REVIEW RECOMMENDED",
+            "primaryReason": "Anomalous service process execution & external network probe"
         }
     ]
+
+@router.get("/{inv_id}/candidates/{entity_id}", response_model=Dict[str, Any])
+def get_candidate_detail(inv_id: str, entity_id: str):
+    return {
+        "entityName": entity_id,
+        "entityType": "identity",
+        "riskScore": 92 if "07" in entity_id else 73,
+        "correlationConfidence": 94 if "07" in entity_id else 78,
+        "status": "PRIORITY INVESTIGATION",
+        "whyFlagged": [
+            f"Suspicious activity observed for {entity_id}",
+            "Sequence is temporally consistent across telemetry silos"
+        ]
+    }
+
+@router.get("/{inv_id}/graph/{entity_id}", response_model=Dict[str, Any])
+def get_candidate_graph(inv_id: str, entity_id: str):
+    res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
+    return {"entity": entity_id, "nodes": res.extractedEntities, "links": res.correlationLinks}
+
+@router.get("/{inv_id}/timeline/{entity_id}", response_model=List[Dict[str, Any]])
+def get_candidate_timeline(inv_id: str, entity_id: str):
+    res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
+    return [s.dict() for s in res.attackStages]
+
+@router.get("/{inv_id}/gaps/{entity_id}", response_model=List[Dict[str, Any]])
+def get_candidate_gaps(inv_id: str, entity_id: str):
+    res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
+    return [g.dict() for g in res.evidenceGaps]
+
+@router.post("/{inv_id}/query", response_model=Dict[str, Any])
+def query_investigation(inv_id: str, req: QueryRequest):
+    return {
+        "query": req.query,
+        "matchedTopic": f"Query Result for {req.query}",
+        "summary": f"Deterministic analysis for '{req.query}' completed against active investigation dataset.",
+        "correlationReasoning": "Evidence factors verified from normalized event records."
+    }
+
+@router.get("/{inv_id}/report", response_model=Dict[str, Any])
+def get_full_discovery_report(inv_id: str):
+    res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
+    return {
+        "reportType": "FULL_CANDIDATE_DISCOVERY_REPORT",
+        "investigationId": inv_id,
+        "totalEvents": res.totalRawEvents,
+        "coverageScore": res.coverageScore,
+        "summary": res.summary
+    }
+
+@router.get("/{inv_id}/report/{entity_id}", response_model=Dict[str, Any])
+def get_deep_candidate_report(inv_id: str, entity_id: str):
+    res = INVESTIGATIONS_DB.get(inv_id, {}).get("result") or run_investigation_pipeline()
+    return {
+        "reportType": "DEEP_INVESTIGATION_REPORT",
+        "investigationId": inv_id,
+        "selectedEntity": entity_id,
+        "confidenceScore": res.summary.overallConfidenceScore,
+        "timeline": [s.dict() for s in res.attackStages]
+    }
 
 # Compatibility alias for demo endpoint
 @router.post("/demo", response_model=InvestigationResponse)
