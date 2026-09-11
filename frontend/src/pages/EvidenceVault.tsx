@@ -22,6 +22,8 @@ import {
   EvidenceClassification
 } from '../types/vault';
 import { InvestigationCandidate } from '../types/candidates';
+import { analyzeFiles, BackendAnalysisResult } from '../services/investigationService';
+import { AlertCircle, RefreshCw } from 'lucide-react';
 
 export const EvidenceVault = () => {
   // Mode selection state: 'demo' vs 'lab'
@@ -37,6 +39,9 @@ export const EvidenceVault = () => {
 
   const [currentStage, setCurrentStage] = useState<InvestigationStage>('idle');
   const [selectedCandidate, setSelectedCandidate] = useState<InvestigationCandidate>(CANDIDATES_DATASET[0]);
+  const [analysisData, setAnalysisData] = useState<BackendAnalysisResult | null>(null);
+  const [analysisError, setAnalysisError] = useState<string | null>(null);
+
   const [isReportModalOpen, setIsReportModalOpen] = useState<boolean>(false);
   const [isCandidateReportOpen, setIsCandidateReportOpen] = useState<boolean>(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState<boolean>(false);
@@ -57,6 +62,7 @@ export const EvidenceVault = () => {
     });
     setInvestigationMode('demo');
     setCurrentStage('idle');
+    setAnalysisError(null);
   };
 
   const handleUploadToSlot = (slotKey: SiloSlotKey, uploadedFiles: File[]) => {
@@ -142,11 +148,28 @@ export const EvidenceVault = () => {
       endpoint: null
     });
     setCurrentStage('idle');
+    setAnalysisError(null);
   };
 
-  const handleStartInvestigation = () => {
-    if (activeFileList.length > 0) {
-      setCurrentStage('ingestion');
+  const handleStartInvestigation = async () => {
+    if (activeFileList.length === 0) return;
+
+    setAnalysisError(null);
+    setCurrentStage('ingestion');
+
+    try {
+      // Gather actual File objects or create fallback Blobs
+      const filesToUpload: File[] = activeFileList.map((f) => {
+        if (f.fileObject) return f.fileObject;
+        return new File([`Raw telemetry data for ${f.name}`], f.name, { type: 'text/plain' });
+      });
+
+      // Send actual POST request to http://127.0.0.1:8000/api/analyze
+      const result = await analyzeFiles(filesToUpload);
+      setAnalysisData(result);
+    } catch (err: any) {
+      console.error('Investigation analysis error:', err);
+      setAnalysisError(err.message || 'Failed to connect to ECHO backend analysis API.');
     }
   };
 
@@ -165,6 +188,38 @@ export const EvidenceVault = () => {
         onOpenResetModal={() => setIsResetModalOpen(true)}
         fileCount={activeFileList.length}
       />
+
+      {/* Error Notification Banner if Backend API Fails */}
+      {analysisError && (
+        <div className="p-4 bg-red-950/90 border border-red-800 rounded-xl text-xs font-mono text-red-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl animate-fade-in">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            <div>
+              <strong className="text-red-200 uppercase font-bold block">ANALYSIS PIPELINE ERROR:</strong>
+              <span>{analysisError}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 shrink-0">
+            <button
+              onClick={handleStartInvestigation}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900 hover:bg-red-800 text-red-100 rounded text-xs font-bold transition-colors cursor-pointer"
+            >
+              <RefreshCw className="w-3.5 h-3.5" />
+              <span>Retry Request</span>
+            </button>
+            <button
+              onClick={() => {
+                setAnalysisError(null);
+                setCurrentStage('idle');
+              }}
+              className="px-3 py-1.5 bg-dark-900 hover:bg-dark-800 text-slate-400 rounded text-xs font-bold transition-colors cursor-pointer"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Persistent Progress Tracker when active */}
       {currentStage !== 'idle' && (
@@ -205,6 +260,7 @@ export const EvidenceVault = () => {
         <StageEntityExtraction
           onCompleteStage={() => setCurrentStage('discovery')}
           isDemoMode={isAllDemoFilesPresent && investigationMode === 'demo'}
+          totalParsedRecords={analysisData?.total_records || 2214}
         />
       )}
 

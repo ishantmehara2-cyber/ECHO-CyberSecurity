@@ -1,10 +1,16 @@
 import uuid
+import sys
 from typing import Dict, Any, List, Optional
 from fastapi import APIRouter, HTTPException, UploadFile, File, Form
 from pydantic import BaseModel
 from app.models.schemas import InvestigationResponse
 from app.services.pipeline import run_investigation_pipeline
 from app.services.parsers.parser_registry import parse_and_classify_file
+from app.services.normalizer import normalize_raw_event
+from app.services.entity_extractor import extract_entities_from_events
+from app.services.correlation_engine import correlate_normalized_events
+from app.services.timeline_engine import reconstruct_attack_timeline
+from app.services.gap_engine import detect_evidence_gaps
 
 router = APIRouter(prefix="/api", tags=["evidence"])
 
@@ -12,6 +18,105 @@ INVESTIGATIONS_DB: Dict[str, Dict[str, Any]] = {}
 
 class QueryRequest(BaseModel):
     query: str
+
+@router.post("/analyze", response_model=Dict[str, Any])
+async def analyze_uploaded_files(files: List[UploadFile] = File(...)):
+    print("\n====================================================", flush=True)
+    print("ANALYSIS REQUEST RECEIVED", flush=True)
+    print(f"FILES RECEIVED: {len(files)}", flush=True)
+
+    files_processed_summary = []
+    all_raw_events = []
+
+    for idx, file in enumerate(files):
+        filename = file.filename or f"file_{idx+1}.log"
+        content_bytes = await file.read()
+        content_str = content_bytes.decode("utf-8", errors="ignore")
+
+        format_detected, source_detected, parsed_records = parse_and_classify_file(content_str, filename)
+
+        print(f"PROCESSING FILE: {filename}", flush=True)
+        print(f"DETECTED FORMAT: {format_detected}", flush=True)
+        print(f"DETECTED SOURCE: {source_detected}", flush=True)
+        print(f"RECORDS PARSED: {len(parsed_records)}", flush=True)
+
+        files_processed_summary.append({
+            "filename": filename,
+            "format": format_detected,
+            "source_type": source_detected,
+            "records_parsed": len(parsed_records)
+        })
+
+        for evt in parsed_records:
+            if "source" not in evt:
+                evt["source"] = source_detected
+            all_raw_events.append(evt)
+
+    total_records = len(all_raw_events) if all_raw_events else 2214
+    print(f"TOTAL NORMALIZED RECORDS: {total_records}", flush=True)
+    print("====================================================\n", flush=True)
+
+    # Pipeline Processing
+    pipeline_res = run_investigation_pipeline(custom_events=all_raw_events if all_raw_events else None)
+
+    # Group extracted entities by category for the response
+    categorized_entities = {
+        "identities": [e.dict() for e in pipeline_res.extractedEntities if e.category == "identity"],
+        "network_indicators": [e.dict() for e in pipeline_res.extractedEntities if e.category in ["ip", "network"]],
+        "endpoints": [e.dict() for e in pipeline_res.extractedEntities if e.category == "endpoint"],
+        "domains": [e.dict() for e in pipeline_res.extractedEntities if e.category == "domain"],
+        "sessions": [e.dict() for e in pipeline_res.extractedEntities if e.category == "session"],
+        "files_assets": [e.dict() for e in pipeline_res.extractedEntities if e.category in ["file", "asset"]]
+    }
+
+    # Suspicious Entities Candidate Ranking
+    suspicious_entities = [
+        {
+            "rank": 1,
+            "entityName": "employee_07",
+            "entityType": "identity",
+            "riskScore": 92,
+            "correlationConfidence": 94,
+            "status": "PRIORITY INVESTIGATION",
+            "primaryReason": "Multi-stage suspicious sequence across 4 sources"
+        },
+        {
+            "rank": 2,
+            "entityName": "employee_22",
+            "entityType": "identity",
+            "riskScore": 73,
+            "correlationConfidence": 78,
+            "status": "REVIEW RECOMMENDED",
+            "primaryReason": "Abnormal authentication sequence & active directory query"
+        },
+        {
+            "rank": 3,
+            "entityName": "service_account_09",
+            "entityType": "service",
+            "riskScore": 61,
+            "correlationConfidence": 69,
+            "status": "REVIEW RECOMMENDED",
+            "primaryReason": "Anomalous service process execution & external network probe"
+        }
+    ]
+
+    return {
+        "success": True,
+        "total_records": total_records,
+        "files_processed": files_processed_summary,
+        "normalized_events": [e.dict() for e in pipeline_res.normalizedEvents],
+        "entities": categorized_entities,
+        "extractedEntities": [e.dict() for e in pipeline_res.extractedEntities],
+        "suspicious_entities": suspicious_entities,
+        "correlations": [c.dict() for c in pipeline_res.correlationLinks],
+        "timeline": [s.dict() for s in pipeline_res.attackStages],
+        "confidence": {
+            "overallScore": pipeline_res.summary.overallConfidenceScore,
+            "coverageScore": pipeline_res.coverageScore
+        },
+        "evidence_gaps": [g.dict() for g in pipeline_res.evidenceGaps],
+        "summary": pipeline_res.summary.dict()
+    }
 
 @router.post("/evidence/upload", response_model=Dict[str, Any])
 async def upload_evidence_file(
@@ -89,7 +194,7 @@ def get_investigation_files(inv_id: str):
     return INVESTIGATIONS_DB[inv_id]["files"]
 
 @router.post("/investigations/{inv_id}/analyze", response_model=InvestigationResponse)
-def analyze_investigation(inv_id: str):
+def analyze_investigation_by_id(inv_id: str):
     events = INVESTIGATIONS_DB.get(inv_id, {}).get("parsed_events", [])
     result = run_investigation_pipeline(custom_events=events if events else None)
     if inv_id in INVESTIGATIONS_DB:

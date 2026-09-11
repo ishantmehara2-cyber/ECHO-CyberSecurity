@@ -2,6 +2,28 @@ import { DEMO_EXTRACTED_ENTITIES } from '../data/vaultDemoData';
 import { CORRELATION_LINKS, RECONSTRUCTED_ATTACK_STAGES, INVESTIGATION_SUMMARY_STORY } from '../data/correlationEngine';
 import { DETECTED_EVIDENCE_GAPS, COVERAGE_SUMMARY_METRICS } from '../data/gapDetectionEngine';
 
+export interface BackendAnalysisResult {
+  success: boolean;
+  total_records: number;
+  files_processed: { filename: string; format: string; source_type: string; records_parsed: number }[];
+  normalized_events: any[];
+  entities: {
+    identities: any[];
+    network_indicators: any[];
+    endpoints: any[];
+    domains: any[];
+    sessions: any[];
+    files_assets: any[];
+  };
+  extractedEntities: any[];
+  suspicious_entities: any[];
+  correlations: any[];
+  timeline: any[];
+  confidence: { overallScore: number; coverageScore: number };
+  evidence_gaps: any[];
+  summary: any;
+}
+
 export interface ApiInvestigationResult {
   investigationId: string;
   timestamp: string;
@@ -24,7 +46,32 @@ export interface UploadResponse {
   status: string;
 }
 
-const API_BASE_URL = 'http://localhost:8000';
+const API_BASE_URL = 'http://127.0.0.1:8000';
+
+export async function analyzeFiles(files: File[]): Promise<BackendAnalysisResult> {
+  const formData = new FormData();
+  for (const file of files) {
+    formData.append('files', file);
+  }
+
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/analyze`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      return data;
+    } else {
+      const errText = await response.text();
+      throw new Error(`Analysis request failed: ${response.status} ${errText}`);
+    }
+  } catch (error) {
+    console.warn('Backend /api/analyze error or unreachable:', error);
+    throw error;
+  }
+}
 
 export async function uploadEvidenceFile(file: File, siloKey?: string): Promise<UploadResponse> {
   const formData = new FormData();
