@@ -6,6 +6,7 @@ import EvidenceVault from './pages/EvidenceVault';
 import CorrelationEnginePage from './pages/CorrelationEnginePage';
 import AttackReconstructionPage from './pages/AttackReconstructionPage';
 import EvidenceIntelligencePage from './pages/EvidenceIntelligencePage';
+import IncidentReplayPage from './pages/IncidentReplayPage';
 
 function App() {
   return (
@@ -18,7 +19,7 @@ function App() {
           <Route path="correlation-engine" element={<CorrelationEnginePage />} />
           <Route path="attack-reconstruction" element={<AttackReconstructionPage />} />
           <Route path="evidence-intelligence" element={<EvidenceIntelligencePage />} />
-          <Route path="incident-replay" element={<div className="p-8 font-mono text-slate-400">Incident Replay - Coming in Future Phase</div>} />
+          <Route path="incident-replay" element={<IncidentReplayPage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Routes>
