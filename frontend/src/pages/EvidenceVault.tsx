@@ -169,9 +169,15 @@ export const EvidenceVault = () => {
 
       // Send actual POST request to http://127.0.0.1:8000/api/analyze
       const result = await analyzeFiles(filesToUpload);
+
+      console.log('ECHO ANALYZE RESPONSE:', result);
+      console.log('TOTAL RECORDS:', result.total_records);
+      console.log('NORMALIZED EVENTS:', result.normalized_events);
+      console.log('EXTRACTED ENTITIES:', result.extractedEntities);
+
       setAnalysisData(result);
     } catch (err: any) {
-      console.error('Investigation analysis error:', err);
+      console.error('Investigation analysis API error:', err);
       setAnalysisError(err.message || 'Failed to connect to ECHO backend analysis API.');
     }
   };
@@ -194,16 +200,16 @@ export const EvidenceVault = () => {
 
       {/* Error Notification Banner if Backend API Fails */}
       {analysisError && (
-        <div className="p-4 bg-red-950/90 border border-red-800 rounded-xl text-xs font-mono text-red-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl animate-fade-in">
+        <div className="p-4 bg-red-950/90 border border-red-800 rounded-xl text-xs font-mono text-red-300 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-xl animate-fade-in font-sans">
           <div className="flex items-center gap-2">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
             <div>
-              <strong className="text-red-200 uppercase font-bold block">ANALYSIS PIPELINE ERROR:</strong>
+              <strong className="text-red-200 uppercase font-bold block font-mono">ANALYSIS PIPELINE ERROR:</strong>
               <span>{analysisError}</span>
             </div>
           </div>
 
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-2 shrink-0 font-mono">
             <button
               onClick={handleStartInvestigation}
               className="flex items-center gap-1.5 px-3 py-1.5 bg-red-900 hover:bg-red-800 text-red-100 rounded text-xs font-bold transition-colors cursor-pointer"
@@ -272,6 +278,8 @@ export const EvidenceVault = () => {
         <CandidateDiscoveryView
           onSelectCandidate={handleSelectCandidate}
           onOpenCandidateReport={() => setIsCandidateReportOpen(true)}
+          customCandidates={analysisData?.suspicious_entities}
+          totalEventsAnalyzed={analysisData?.total_records}
         />
       )}
 

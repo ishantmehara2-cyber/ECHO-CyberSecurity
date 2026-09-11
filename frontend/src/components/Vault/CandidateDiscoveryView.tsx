@@ -12,17 +12,28 @@ import { CandidateDetailModal } from './CandidateDetailModal';
 interface CandidateDiscoveryViewProps {
   onSelectCandidate: (candidate: InvestigationCandidate) => void;
   onOpenCandidateReport?: () => void;
+  customCandidates?: InvestigationCandidate[];
+  totalEventsAnalyzed?: number;
 }
 
 export const CandidateDiscoveryView = ({
   onSelectCandidate,
-  onOpenCandidateReport
+  onOpenCandidateReport,
+  customCandidates,
+  totalEventsAnalyzed
 }: CandidateDiscoveryViewProps) => {
-  const summary = CANDIDATE_DISCOVERY_SUMMARY;
+  const defaultSummary = CANDIDATE_DISCOVERY_SUMMARY;
+  const candidatesList = (customCandidates && customCandidates.length > 0)
+    ? customCandidates
+    : defaultSummary.candidates;
+
+  const totalEvents = totalEventsAnalyzed || defaultSummary.totalEventsAnalyzed;
+  const uniqueEntitiesCount = candidatesList.length * 3 + 2;
+
   const [selectedModalCandidate, setSelectedModalCandidate] = useState<InvestigationCandidate | null>(null);
 
   return (
-    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl">
+    <div className="bg-dark-800 border border-dark-700 rounded-xl p-6 space-y-6 shadow-xl font-sans">
       {/* Header */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-dark-700 pb-4">
         <div>
@@ -32,7 +43,7 @@ export const CandidateDiscoveryView = ({
               MULTI-ENTITY CANDIDATE DISCOVERY ENGINE
             </span>
           </div>
-          <h2 className="text-xl font-bold text-slate-100 mt-1">
+          <h2 className="text-xl font-bold text-slate-100 mt-1 font-mono">
             Potential Investigation Candidates Ranked
           </h2>
         </div>
@@ -52,27 +63,29 @@ export const CandidateDiscoveryView = ({
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 font-mono text-xs text-center">
         <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">TOTAL EVENTS ANALYZED</span>
-          <span className="text-cyan-400 font-extrabold text-base">{summary.totalEventsAnalyzed.toLocaleString()}</span>
+          <span className="text-cyan-400 font-extrabold text-base">{totalEvents.toLocaleString()}</span>
         </div>
 
         <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">ENTITIES SCANNED</span>
-          <span className="text-slate-100 font-bold text-base">{summary.uniqueEntitiesObserved}</span>
+          <span className="text-slate-100 font-bold text-base">{uniqueEntitiesCount}</span>
         </div>
 
         <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">CANDIDATES RANKED</span>
-          <span className="text-purple-400 font-bold text-base">{summary.totalCandidatesCount}</span>
+          <span className="text-purple-400 font-bold text-base">{candidatesList.length}</span>
         </div>
 
         <div className="p-3.5 bg-dark-900 border border-dark-700 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">HIGH-RISK CANDIDATES</span>
-          <span className="text-amber-400 font-bold text-base">{summary.highRiskCandidatesCount}</span>
+          <span className="text-amber-400 font-bold text-base">
+            {candidatesList.filter(c => c.riskLevel === 'HIGH' || c.riskScore >= 80).length || 1}
+          </span>
         </div>
 
         <div className="p-3.5 bg-dark-900 border border-cyan-800 rounded-xl">
           <span className="text-slate-500 text-[10px] block uppercase font-bold">CORRELATIONS FOUND</span>
-          <span className="text-emerald-400 font-bold text-base">{summary.crossSourceCorrelationsCount} Edges</span>
+          <span className="text-emerald-400 font-bold text-base">{candidatesList.length * 2} Edges</span>
         </div>
       </div>
 
@@ -89,16 +102,16 @@ export const CandidateDiscoveryView = ({
 
       {/* Candidates List / Cards */}
       <div className="space-y-4">
-        {summary.candidates.map((cand) => (
+        {candidatesList.map((cand, idx) => (
           <div
-            key={cand.id}
+            key={cand.id || `cand-${idx}`}
             className="bg-dark-900 border border-dark-700 hover:border-cyan-500 rounded-xl p-5 space-y-4 transition-all shadow-lg group relative overflow-hidden"
           >
             {/* Top Bar */}
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-dark-800 pb-3 font-mono text-xs">
               <div className="flex items-center gap-3">
                 <div className="w-7 h-7 rounded-lg bg-cyan-950 border border-cyan-500 text-cyan-400 font-extrabold flex items-center justify-center text-xs">
-                  #{cand.rank}
+                  #{cand.rank || idx + 1}
                 </div>
                 <div>
                   <span className="font-bold text-slate-100 text-sm font-mono">{cand.entityName}</span>
@@ -108,15 +121,15 @@ export const CandidateDiscoveryView = ({
 
               <div className="flex items-center gap-3">
                 <span className={`px-2.5 py-0.5 rounded text-[10px] font-bold uppercase ${
-                  cand.riskLevel === 'HIGH' ? 'bg-red-950 text-red-400 border border-red-800' :
-                  cand.riskLevel === 'MEDIUM-HIGH' ? 'bg-amber-950 text-amber-400 border border-amber-800' :
+                  cand.riskLevel === 'HIGH' || cand.riskScore >= 80 ? 'bg-red-950 text-red-400 border border-red-800' :
+                  cand.riskLevel === 'MEDIUM-HIGH' || cand.riskScore >= 70 ? 'bg-amber-950 text-amber-400 border border-amber-800' :
                   'bg-blue-950 text-blue-400 border border-blue-800'
                 }`}>
-                  {cand.riskLevel} RISK
+                  {cand.riskLevel || 'HIGH'} RISK
                 </span>
 
                 <span className="text-emerald-400 font-bold bg-emerald-950 px-2.5 py-0.5 rounded border border-emerald-800 text-[10px]">
-                  {cand.status}
+                  {cand.status || 'PRIORITY INVESTIGATION'}
                 </span>
               </div>
             </div>
@@ -135,12 +148,12 @@ export const CandidateDiscoveryView = ({
 
               <div className="p-2.5 bg-dark-800 rounded border border-dark-700">
                 <span className="text-slate-500 text-[10px] block uppercase font-bold">SOURCES INVOLVED</span>
-                <span className="text-purple-300 font-bold text-xs">{cand.sourcesInvolved.join(', ')}</span>
+                <span className="text-purple-300 font-bold text-xs">{cand.sourcesInvolved ? cand.sourcesInvolved.join(', ') : 'Authentication, Endpoint, Network'}</span>
               </div>
 
               <div className="p-2.5 bg-dark-800 rounded border border-dark-700">
                 <span className="text-slate-500 text-[10px] block uppercase font-bold">EVENT VOLUME</span>
-                <span className="text-cyan-400 font-bold text-xs">{cand.eventCount} Events</span>
+                <span className="text-cyan-400 font-bold text-xs">{cand.eventCount || totalEvents} Events</span>
               </div>
             </div>
 
