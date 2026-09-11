@@ -15,8 +15,14 @@ export const StageIngestion = ({ files, onCompleteStage }: StageIngestionProps) 
     if (files.length === 0) return;
 
     let progress = 0;
+    // Non-linear variable progress steps
+    const stepIncrements = [5, 12, 8, 25, 10, 15, 5, 20];
+    let stepIdx = 0;
+
     const interval = setInterval(() => {
-      progress += 10;
+      const inc = stepIncrements[stepIdx % stepIncrements.length];
+      stepIdx++;
+      progress += inc;
 
       const currentFile = files[activeFileIndex];
       if (currentFile) {
@@ -34,10 +40,10 @@ export const StageIngestion = ({ files, onCompleteStage }: StageIngestionProps) 
           clearInterval(interval);
           setTimeout(() => {
             onCompleteStage();
-          }, 1200);
+          }, 800);
         }
       }
-    }, 120);
+    }, 280);
 
     return () => clearInterval(interval);
   }, [files, activeFileIndex, onCompleteStage]);
@@ -105,7 +111,7 @@ export const StageIngestion = ({ files, onCompleteStage }: StageIngestionProps) 
               {/* Progress Bar */}
               <div className="h-2 bg-dark-950 rounded-full overflow-hidden mb-2">
                 <div
-                  className={`h-full transition-all duration-150 ${
+                  className={`h-full transition-all duration-300 ease-out ${
                     isDone ? 'bg-emerald-400' : 'bg-gradient-to-r from-cyan-500 to-blue-500'
                   }`}
                   style={{ width: `${progress}%` }}

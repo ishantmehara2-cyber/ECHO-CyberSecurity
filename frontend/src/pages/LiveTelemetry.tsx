@@ -5,6 +5,7 @@ import { IngestionFlowDiagram } from '../components/Telemetry/IngestionFlowDiagr
 import { LiveEventStream } from '../components/Telemetry/LiveEventStream';
 import { NormalizationPreview } from '../components/Telemetry/NormalizationPreview';
 import { IntelligenceSummary } from '../components/Telemetry/IntelligenceSummary';
+import { NormalizedTelemetryTable } from '../components/Telemetry/NormalizedTelemetryTable';
 import { INITIAL_SOURCES, SYNTHETIC_TELEMETRY_DATA } from '../data/telemetryData';
 import { TelemetryEvent, TelemetrySourceInfo, TelemetrySourceType, EventSeverity } from '../types/telemetry';
 
@@ -19,13 +20,13 @@ export const LiveTelemetry = () => {
 
   const streamIndexRef = useRef<number>(0);
 
-  // Initialize with the full synthetic dataset on mount so page isn't empty
+  // Initialize with full dataset
   useEffect(() => {
     setEvents(SYNTHETIC_TELEMETRY_DATA);
-    setSelectedEvent(SYNTHETIC_TELEMETRY_DATA[1]); // Default to first attack sequence event
+    setSelectedEvent(SYNTHETIC_TELEMETRY_DATA[1]);
   }, []);
 
-  // Streaming logic timer
+  // Streaming timer
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
 
@@ -35,12 +36,10 @@ export const LiveTelemetry = () => {
           const nextEvent = SYNTHETIC_TELEMETRY_DATA[streamIndexRef.current];
 
           setEvents((prev) => {
-            // Avoid duplicate additions if re-run
             if (prev.some((e) => e.id === nextEvent.id)) return prev;
             return [...prev, nextEvent];
           });
 
-          // Update source event count & activity time
           setSources((prevSources) =>
             prevSources.map((s) => {
               if (s.id === nextEvent.source) {
@@ -54,9 +53,7 @@ export const LiveTelemetry = () => {
             })
           );
 
-          // Select latest event for live normalization preview
           setSelectedEvent(nextEvent);
-
           streamIndexRef.current += 1;
         } else {
           setIsStreaming(false);
@@ -133,6 +130,9 @@ export const LiveTelemetry = () => {
           <IntelligenceSummary events={events} />
         </div>
       </div>
+
+      {/* 6. Normalized Telemetry Registry (100 Representative Events Table) */}
+      <NormalizedTelemetryTable />
     </div>
   );
 };

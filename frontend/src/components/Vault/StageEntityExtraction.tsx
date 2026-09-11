@@ -20,24 +20,41 @@ interface StageEntityExtractionProps {
 
 export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEntityExtractionProps) => {
   const [eventCount, setEventCount] = useState<number>(0);
+  const [pipelinePhase, setPipelinePhase] = useState<string>('READING TELEMETRY');
   const [visibleEntities, setVisibleEntities] = useState<ExtractedEntity[]>([]);
 
   const targetEntities = isDemoMode ? DEMO_EXTRACTED_ENTITIES : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
   const targetEventCount = isDemoMode ? 2214 : 640;
 
   useEffect(() => {
-    // Animate event counter upward
-    const eventInterval = setInterval(() => {
-      setEventCount((prev) => {
-        if (prev >= targetEventCount) {
-          clearInterval(eventInterval);
-          return targetEventCount;
-        }
-        return prev + Math.floor(Math.random() * 120) + 40;
-      });
-    }, 80);
+    // Non-uniform natural event scanning counter simulation
+    const intervals = [
+      { threshold: 350, phase: 'READING TELEMETRY', incMin: 40, incMax: 120, delay: 100 },
+      { threshold: 750, phase: 'ENTITY EXTRACTION', incMin: 20, incMax: 80, delay: 150 },
+      { threshold: 1250, phase: 'CROSS-SOURCE CORRELATION', incMin: 50, incMax: 160, delay: 120 },
+      { threshold: 1850, phase: 'TEMPORAL ANALYSIS', incMin: 30, incMax: 90, delay: 140 },
+      { threshold: targetEventCount, phase: 'FINAL RECONSTRUCTION', incMin: 15, incMax: 60, delay: 100 },
+    ];
 
-    // Reveal entities one by one
+    let currentCount = 0;
+    let timerId: ReturnType<typeof setTimeout>;
+
+    const step = () => {
+      const activeStage = intervals.find((i) => currentCount < i.threshold) || intervals[intervals.length - 1];
+      setPipelinePhase(activeStage.phase);
+
+      const inc = Math.floor(Math.random() * (activeStage.incMax - activeStage.incMin)) + activeStage.incMin;
+      currentCount = Math.min(currentCount + inc, targetEventCount);
+      setEventCount(currentCount);
+
+      if (currentCount < targetEventCount) {
+        timerId = setTimeout(step, activeStage.delay);
+      }
+    };
+
+    timerId = setTimeout(step, 100);
+
+    // Reveal entities sequentially
     let index = 0;
     const entityInterval = setInterval(() => {
       if (index < targetEntities.length) {
@@ -50,10 +67,10 @@ export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEnti
           onCompleteStage();
         }, 1500);
       }
-    }, 450);
+    }, 500);
 
     return () => {
-      clearInterval(eventInterval);
+      clearTimeout(timerId);
       clearInterval(entityInterval);
     };
   }, [targetEntities, targetEventCount, onCompleteStage]);
@@ -79,12 +96,14 @@ export const StageEntityExtraction = ({ onCompleteStage, isDemoMode }: StageEnti
           </h2>
         </div>
 
-        {/* Live Event Counter Banner */}
+        {/* Live Event Counter & Phase Banner */}
         <div className="px-4 py-2.5 bg-dark-900 border border-cyan-800/80 rounded-xl flex items-center gap-3">
-          <Loader2 className="w-5 h-5 text-cyan-400 animate-spin" />
+          <Loader2 className="w-5 h-5 text-cyan-400 animate-spin shrink-0" />
           <div>
-            <span className="text-[10px] font-mono text-slate-500 block uppercase">TOTAL RAW EVENTS ANALYZED</span>
-            <span className="text-lg font-mono font-bold text-cyan-400">
+            <span className="text-[10px] font-mono text-cyan-400 block uppercase font-bold">
+              ● {pipelinePhase}
+            </span>
+            <span className="text-lg font-mono font-bold text-slate-100">
               {eventCount.toLocaleString()} / {targetEventCount.toLocaleString()} EVENTS
             </span>
           </div>

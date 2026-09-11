@@ -1,4 +1,4 @@
-import { CheckCircle2, Clock, Zap, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
+import { CheckCircle2, Clock, ArrowRight, ShieldCheck, HelpCircle } from 'lucide-react';
 import { SiloSlotKey, UploadedEvidenceFile } from '../../types/vault';
 
 interface PreInvestigationSummaryProps {
@@ -100,7 +100,7 @@ export const PreInvestigationSummary = ({
         </div>
       </div>
 
-      {/* Main Mode Badge & Action Trigger Button */}
+      {/* Main Mode Badge & Professional Action Trigger Button */}
       <div className="p-5 bg-dark-900 border border-cyan-900/80 rounded-xl flex flex-col lg:flex-row lg:items-center justify-between gap-4 shadow-xl">
         <div className="space-y-1">
           <div className="flex items-center gap-2">
@@ -124,18 +124,23 @@ export const PreInvestigationSummary = ({
           </p>
         </div>
 
-        <button
-          onClick={onStartInvestigation}
-          disabled={loadedCount === 0}
-          className={`flex items-center justify-center gap-2.5 px-6 py-4 font-extrabold rounded-xl transition-all uppercase tracking-wider text-sm cursor-pointer shadow-xl shrink-0 ${
-            loadedCount > 0
-              ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(6,182,212,0.6)]'
-              : 'bg-dark-700 text-slate-500 cursor-not-allowed border border-dark-600'
-          }`}
-        >
-          <Zap className="w-5 h-5 fill-slate-950" />
-          <span>{isFullMode ? '⚡ BEGIN FULL ECHO INVESTIGATION' : '⚡ BEGIN ECHO INVESTIGATION'}</span>
-        </button>
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <button
+            onClick={onStartInvestigation}
+            disabled={loadedCount === 0}
+            className={`flex items-center justify-center gap-2.5 px-6 py-3.5 font-bold rounded-lg transition-all uppercase tracking-wider text-xs font-mono cursor-pointer border ${
+              loadedCount > 0
+                ? 'bg-cyan-600 hover:bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.99]'
+                : 'bg-dark-700 text-slate-500 border-dark-600 cursor-not-allowed'
+            }`}
+          >
+            <ShieldCheck className="w-4 h-4" />
+            <span>BEGIN ECHO INVESTIGATION</span>
+          </button>
+          <span className="text-[10px] font-mono text-slate-500 text-right">
+            Initiate cross-source telemetry correlation
+          </span>
+        </div>
       </div>
     </div>
   );

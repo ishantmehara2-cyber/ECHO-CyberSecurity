@@ -4,7 +4,7 @@ import {
   Upload,
   Trash2,
   CheckCircle2,
-  Zap,
+  ShieldCheck,
   Lock,
   Globe,
   Monitor,
@@ -250,18 +250,24 @@ export const EvidenceUploadArea = ({
               </p>
             </div>
 
-            <button
-              onClick={onStartInvestigation}
-              disabled={files.length === 0}
-              className={`flex items-center justify-center gap-2.5 px-6 py-3.5 font-extrabold rounded-xl transition-all uppercase tracking-wider text-sm cursor-pointer shadow-xl ${
-                files.length > 0
-                  ? 'bg-gradient-to-r from-cyan-500 via-blue-600 to-purple-600 hover:from-cyan-400 hover:to-purple-500 text-slate-950 shadow-[0_0_25px_rgba(6,182,212,0.4)] hover:shadow-[0_0_35px_rgba(6,182,212,0.6)]'
-                  : 'bg-dark-700 text-slate-500 cursor-not-allowed border border-dark-600'
-              }`}
-            >
-              <Zap className="w-5 h-5 fill-slate-950" />
-              <span>BEGIN ECHO INVESTIGATION</span>
-            </button>
+            {/* Redesigned Enterprise Button */}
+            <div className="flex flex-col items-end gap-1">
+              <button
+                onClick={onStartInvestigation}
+                disabled={files.length === 0}
+                className={`flex items-center justify-center gap-2.5 px-6 py-3 font-bold rounded-lg transition-all uppercase tracking-wider text-xs font-mono cursor-pointer border ${
+                  files.length > 0
+                    ? 'bg-cyan-600 hover:bg-cyan-500 text-slate-950 border-cyan-400 shadow-[0_0_15px_rgba(6,182,212,0.3)] hover:shadow-[0_0_20px_rgba(6,182,212,0.5)] active:scale-[0.99]'
+                    : 'bg-dark-700 text-slate-500 border-dark-600 cursor-not-allowed'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>BEGIN ECHO INVESTIGATION</span>
+              </button>
+              <span className="text-[10px] font-mono text-slate-500 text-right">
+                Initiate cross-source telemetry correlation
+              </span>
+            </div>
           </div>
         </div>
       )}
