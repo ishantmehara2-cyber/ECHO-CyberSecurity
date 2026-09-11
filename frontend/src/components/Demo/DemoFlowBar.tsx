@@ -8,7 +8,7 @@ export const DemoFlowBar = () => {
   const demoSteps = [
     { label: '1. Evidence', path: '/evidence-vault', icon: FolderLock },
     { label: '2. Live Telemetry', path: '/live-telemetry', icon: Sparkles },
-    { label: '3. Correlation Graph', path: '/correlation-engine', icon: Network },
+    { label: '3. Attack Graph', path: '/attack-graph', icon: Network },
     { label: '4. Attack Timeline', path: '/attack-reconstruction', icon: GitBranch },
     { label: '5. Evidence Gaps', path: '/evidence-intelligence', icon: Search },
   ];

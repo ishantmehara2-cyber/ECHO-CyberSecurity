@@ -38,7 +38,7 @@ const MainLayout = () => {
     { name: 'Command Center', path: '/', icon: ShieldAlert },
     { name: 'Evidence Vault', path: '/evidence-vault', icon: FileCode2 },
     { name: 'Live Telemetry', path: '/live-telemetry', icon: Activity },
-    { name: 'Correlation Engine', path: '/correlation-engine', icon: Network },
+    { name: 'Attack Graph', path: '/attack-graph', icon: Network },
     { name: 'Evidence Intelligence', path: '/evidence-intelligence', icon: Search },
     { name: 'Incident Replay', path: '/incident-replay', icon: PlayCircle },
   ];

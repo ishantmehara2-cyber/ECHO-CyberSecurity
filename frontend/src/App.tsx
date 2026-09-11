@@ -18,7 +18,8 @@ function App() {
             <Route index element={<CommandCenter />} />
             <Route path="evidence-vault" element={<EvidenceVault />} />
             <Route path="live-telemetry" element={<LiveTelemetry />} />
-            <Route path="correlation-engine" element={<CorrelationEnginePage />} />
+            <Route path="attack-graph" element={<CorrelationEnginePage />} />
+            <Route path="correlation-engine" element={<Navigate to="/attack-graph" replace />} />
             <Route path="attack-reconstruction" element={<AttackReconstructionPage />} />
             <Route path="evidence-intelligence" element={<EvidenceIntelligencePage />} />
             <Route path="incident-replay" element={<IncidentReplayPage />} />
