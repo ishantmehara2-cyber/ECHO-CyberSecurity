@@ -1,4 +1,5 @@
 import { GitBranch, Sparkles } from 'lucide-react';
+import { InteractiveCorrelationGraph } from '../components/Correlation/InteractiveCorrelationGraph';
 import { AttackSequenceTimeline } from '../components/Correlation/AttackSequenceTimeline';
 import { InvestigationStoryNarrative } from '../components/Correlation/InvestigationStoryNarrative';
 import { EmptyInvestigationState } from '../components/Common/EmptyInvestigationState';
@@ -9,7 +10,7 @@ export const AttackReconstructionPage = () => {
 
   if (!hasAnalysisData) {
     return (
-      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6">
+      <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto space-y-6 font-sans">
         <div className="bg-dark-800/80 border border-dark-700 rounded-xl p-6 overflow-hidden backdrop-blur-sm shadow-xl font-sans">
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-semibold uppercase tracking-wider font-mono">
@@ -56,6 +57,15 @@ export const AttackReconstructionPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Central Attack Investigation Graph */}
+      <InteractiveCorrelationGraph
+        customNodes={analysisData?.extractedEntities}
+        customLinks={analysisData?.correlations}
+        totalRecords={analysisData?.total_records}
+        confidenceScore={analysisData?.confidence?.overallScore}
+        summaryData={analysisData?.summary}
+      />
 
       {/* Multi-stage Timeline */}
       <AttackSequenceTimeline customStages={analysisData?.timeline} />
