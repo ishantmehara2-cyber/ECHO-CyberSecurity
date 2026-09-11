@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Users,
   Globe,
@@ -20,17 +20,31 @@ interface StageEntityExtractionProps {
   customEntities?: ExtractedEntity[];
 }
 
+const isMatchingCategory = (entityCategory: string, catKey: string): boolean => {
+  const ec = (entityCategory || '').toLowerCase();
+  if (catKey === 'identity') return ec === 'identity' || ec === 'user' || ec === 'identities';
+  if (catKey === 'ip') return ec === 'ip' || ec === 'network' || ec === 'network_indicators';
+  if (catKey === 'endpoint') return ec === 'endpoint' || ec === 'host' || ec === 'endpoints';
+  if (catKey === 'domain') return ec === 'domain' || ec === 'domains';
+  if (catKey === 'session') return ec === 'session' || ec === 'sessions';
+  if (catKey === 'file') return ec === 'file' || ec === 'asset' || ec === 'files_assets';
+  return ec === catKey;
+};
+
 export const StageEntityExtraction = ({
   onCompleteStage,
   isDemoMode,
-  totalParsedRecords = 2214,
+  totalParsedRecords,
   customEntities
 }: StageEntityExtractionProps) => {
-  const targetEventCount = (customEntities && customEntities.length > 0)
-    ? (totalParsedRecords || customEntities.length)
+  // Explicit target count calculation - preferred from backend, no hidden 1064/2214 overrides
+  const targetEventCount = (totalParsedRecords !== undefined && totalParsedRecords !== null && totalParsedRecords > 0)
+    ? totalParsedRecords
+    : (customEntities && customEntities.length > 0)
+    ? customEntities.length
     : isDemoMode
     ? 2214
-    : (totalParsedRecords || 640);
+    : 0;
 
   const targetEntities = (customEntities && customEntities.length > 0)
     ? customEntities
@@ -38,59 +52,66 @@ export const StageEntityExtraction = ({
     ? DEMO_EXTRACTED_ENTITIES
     : DEMO_EXTRACTED_ENTITIES.slice(0, 6);
 
+  console.log("STAGE ENTITY EXTRACTION PROPS:", {
+    totalParsedRecords,
+    targetEventCount,
+    isDemoMode,
+    customEntitiesCount: customEntities?.length
+  });
+
   const [currentRecord, setCurrentRecord] = useState<number>(0);
   const [pipelinePhase, setPipelinePhase] = useState<string>('READING TELEMETRY');
   const [visibleEntities, setVisibleEntities] = useState<ExtractedEntity[]>([]);
   const [status, setStatus] = useState<'extracting' | 'complete'>('extracting');
 
-  const hasStartedRef = useRef<boolean>(false);
-
   useEffect(() => {
-    if (hasStartedRef.current) return;
-    hasStartedRef.current = true;
+    if (!targetEventCount || targetEventCount <= 0) {
+      setCurrentRecord(0);
+      return;
+    }
 
-    // Phases with thresholds
+    setCurrentRecord(0);
+    setStatus('extracting');
+
+    // Phase thresholds with safe minimums for small record counts
     const phases = [
-      { threshold: Math.floor(targetEventCount * 0.2), name: 'READING TELEMETRY' },
-      { threshold: Math.floor(targetEventCount * 0.45), name: 'ENTITY EXTRACTION' },
-      { threshold: Math.floor(targetEventCount * 0.70), name: 'CROSS-SOURCE CORRELATION' },
-      { threshold: Math.floor(targetEventCount * 0.90), name: 'TEMPORAL ANALYSIS' },
+      { threshold: Math.max(1, Math.floor(targetEventCount * 0.2)), name: 'READING TELEMETRY' },
+      { threshold: Math.max(1, Math.floor(targetEventCount * 0.45)), name: 'ENTITY EXTRACTION' },
+      { threshold: Math.max(1, Math.floor(targetEventCount * 0.70)), name: 'CROSS-SOURCE CORRELATION' },
+      { threshold: Math.max(1, Math.floor(targetEventCount * 0.90)), name: 'TEMPORAL ANALYSIS' },
       { threshold: targetEventCount, name: 'FINAL RECONSTRUCTION' }
     ];
 
     let count = 0;
     let timerId: ReturnType<typeof setTimeout>;
 
-    // Smooth, non-looping monotonic progress steps
     const step = () => {
-      let inc = 0;
-      if (count < targetEventCount * 0.3) {
-        inc = Math.max(1, Math.floor(targetEventCount * 0.1));
-      } else if (count < targetEventCount * 0.7) {
-        inc = Math.max(1, Math.floor(targetEventCount * 0.05));
-      } else if (count < targetEventCount * 0.95) {
-        inc = Math.max(1, Math.floor(targetEventCount * 0.02));
-      } else {
-        inc = 1;
+      let inc = 1;
+      if (targetEventCount > 20) {
+        if (count < targetEventCount * 0.3) {
+          inc = Math.max(1, Math.floor(targetEventCount * 0.1));
+        } else if (count < targetEventCount * 0.7) {
+          inc = Math.max(1, Math.floor(targetEventCount * 0.05));
+        } else {
+          inc = Math.max(1, Math.floor(targetEventCount * 0.02));
+        }
       }
 
       count = Math.min(count + inc, targetEventCount);
       setCurrentRecord(count);
 
-      // Phase update
       const activePhase = phases.find((p) => count <= p.threshold) || phases[phases.length - 1];
       setPipelinePhase(activePhase.name);
 
       if (count < targetEventCount) {
-        timerId = setTimeout(step, 80);
+        timerId = setTimeout(step, 70);
       } else {
-        // EXTRACTION COMPLETE
         setStatus('complete');
         setPipelinePhase('EXTRACTION COMPLETE');
       }
     };
 
-    timerId = setTimeout(step, 80);
+    timerId = setTimeout(step, 70);
 
     // Sequential entity reveal
     let entityIdx = 0;
@@ -105,7 +126,7 @@ export const StageEntityExtraction = ({
       } else {
         clearInterval(entityInterval);
       }
-    }, 300);
+    }, 250);
 
     return () => {
       clearTimeout(timerId);
@@ -113,12 +134,12 @@ export const StageEntityExtraction = ({
     };
   }, [targetEventCount, targetEntities]);
 
-  // Handle stage completion transition when status becomes complete
+  // Transition to next stage when status becomes complete
   useEffect(() => {
     if (status === 'complete') {
       const completionTimer = setTimeout(() => {
         onCompleteStage();
-      }, 1200);
+      }, 1000);
       return () => clearTimeout(completionTimer);
     }
   }, [status, onCompleteStage]);
@@ -170,7 +191,7 @@ export const StageEntityExtraction = ({
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
         {categories.map((cat) => {
           const Icon = cat.icon;
-          const matchingEntities = visibleEntities.filter((e) => e.category === cat.key);
+          const matchingEntities = visibleEntities.filter((e) => isMatchingCategory(e.category, cat.key));
 
           return (
             <div key={cat.key} className="bg-dark-900 border border-dark-700 rounded-xl p-4 flex flex-col space-y-3">
