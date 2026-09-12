@@ -8,7 +8,8 @@ import {
   PlayCircle,
   FileCode2,
   Bell,
-  UserCircle
+  UserCircle,
+  Info
 } from 'lucide-react';
 import { DemoFlowBar } from '../components/Demo/DemoFlowBar';
 
@@ -38,7 +39,8 @@ const MainLayout = () => {
     { name: 'Command Center', path: '/', icon: ShieldAlert },
     { name: 'Evidence Vault', path: '/evidence-vault', icon: FileCode2 },
     { name: 'Live Telemetry', path: '/live-telemetry', icon: Activity },
-    { name: 'Attack Graph', path: '/attack-graph', icon: Network },
+    { name: 'Correlation Engine', path: '/correlation-engine', icon: Network },
+    { name: 'Attack Reconstruction', path: '/attack-reconstruction', icon: Search },
     { name: 'Evidence Intelligence', path: '/evidence-intelligence', icon: Search },
     { name: 'Incident Replay', path: '/incident-replay', icon: PlayCircle },
   ];
@@ -56,7 +58,7 @@ const MainLayout = () => {
         </div>
 
         <div className="flex-1 py-6 overflow-y-auto">
-          <div className="px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Investigation</div>
+          <div className="px-4 mb-2 text-xs font-semibold text-slate-500 uppercase tracking-wider font-mono">Investigation Workspace</div>
           <nav className="space-y-1 px-3">
             {navItems.map((item) => (
               <NavLink
@@ -77,9 +79,15 @@ const MainLayout = () => {
           </nav>
         </div>
 
-        {/* Environment Tag */}
-        <div className="p-4 border-t border-dark-700">
-          <div className="text-xs text-slate-500 font-mono">ENV: DEV / LOCAL</div>
+        {/* Environment & Synthetic Data Disclosure */}
+        <div className="p-4 border-t border-dark-700 space-y-2">
+          <div className="text-[10px] font-mono text-slate-500 flex items-center justify-between">
+            <span>ENV: LOCAL DEV</span>
+            <span className="text-cyan-400 font-bold">FASTAPI ONLINE</span>
+          </div>
+          <p className="text-[9px] text-slate-500 leading-tight">
+            This demonstration uses synthetic cybersecurity telemetry. All identities, IPs, domains, and files are non-production examples.
+          </p>
         </div>
       </div>
 
@@ -90,14 +98,14 @@ const MainLayout = () => {
 
           <div className="flex items-center gap-4">
             <div className="flex items-center gap-2 px-3 py-1 bg-dark-900 rounded-full border border-dark-700">
-              <span className="text-xs font-medium text-slate-400">BACKEND:</span>
+              <span className="text-xs font-medium text-slate-400 font-mono">BACKEND:</span>
               <div className="flex items-center gap-1.5">
                 <div className={`w-2 h-2 rounded-full ${
                   backendStatus === 'ONLINE' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]' :
                   backendStatus === 'OFFLINE' ? 'bg-red-500 shadow-[0_0_8px_rgba(239,68,68,0.5)]' :
                   'bg-yellow-500 animate-pulse'
                 }`} />
-                <span className={`text-xs font-bold ${
+                <span className={`text-xs font-bold font-mono ${
                   backendStatus === 'ONLINE' ? 'text-emerald-500' :
                   backendStatus === 'OFFLINE' ? 'text-red-500' :
                   'text-yellow-500'
@@ -106,6 +114,12 @@ const MainLayout = () => {
                 </span>
               </div>
             </div>
+
+            {/* Synthetic Data Disclosure Badge */}
+            <span className="text-[10px] font-mono text-slate-500 bg-dark-900 px-3 py-1 rounded-full border border-dark-700 hidden lg:flex items-center gap-1.5">
+              <Info className="w-3 h-3 text-cyan-400 shrink-0" />
+              <span>SYNTHETIC TELEMETRY DEMONSTRATION ENVIRONMENT</span>
+            </span>
           </div>
 
           <div className="flex items-center gap-6">
