@@ -30,7 +30,8 @@ def normalize_raw_event(event_id: str, raw_event: Dict[str, Any], source_type: s
     url = extract_alias(raw_event, URL_FIELD_ALIASES)
     port = extract_alias(raw_event, PORT_FIELD_ALIASES)
 
-    timestamp = str(raw_event.get("timestamp") or raw_event.get("rawTimestamp") or raw_event.get("time") or "10:30:00")
+    timestamp_value = raw_event.get("timestamp") or raw_event.get("rawTimestamp") or raw_event.get("time")
+    timestamp = str(timestamp_value).strip() if timestamp_value else ""
     event_type = str(raw_event.get("event") or raw_event.get("eventType") or raw_event.get("event_type") or "security_activity")
     severity = str(raw_event.get("severity") or "info").lower()
     description = str(raw_event.get("description") or f"Activity recorded on {source_type}")

@@ -67,6 +67,9 @@ class AttackStage(BaseModel):
     confidenceScore: int
     confidenceReasons: List[str]
     statusType: str = 'OBSERVED'  # 'OBSERVED' or 'INFERRED'
+    relatedEventIds: List[str] = []
+    eventCount: int = 1
+    sourceCount: int = 1
 
 class EvidenceGap(BaseModel):
     id: str

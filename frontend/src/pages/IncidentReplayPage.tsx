@@ -48,16 +48,16 @@ export const IncidentReplayPage = () => {
           <div className="space-y-2">
             <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-cyan-950/80 border border-cyan-800/50 text-cyan-400 text-xs font-semibold uppercase tracking-wider font-mono">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Step-by-Step Incident Sequence Replay</span>
+              <span>Heuristic Reconstruction</span>
             </div>
 
             <h1 className="text-3xl font-extrabold text-slate-100 tracking-tight flex items-center gap-3 font-mono">
               <PlayCircle className="w-8 h-8 text-cyan-400" />
-              ECHO Incident Replay Engine
+              Reconstructed Multi-Stage Sequence
             </h1>
 
             <p className="text-slate-400 text-sm sm:text-base leading-relaxed max-w-3xl">
-              Step-by-step chronological replay of the correlated multi-stage attack sequence.
+              {(analysisData?.total_records || 0).toLocaleString()} raw events analyzed → {timelineEvents.length} correlated investigation stages
             </p>
           </div>
         </div>
@@ -95,7 +95,7 @@ export const IncidentReplayPage = () => {
 
           <div className="flex items-center gap-2 text-xs font-mono text-emerald-400 font-bold bg-emerald-950/80 px-3 py-1.5 rounded-lg border border-emerald-800 self-start md:self-auto">
             <ShieldCheck className="w-4 h-4" />
-            <span>INCIDENT REPLAY ACTIVE</span>
+            <span>HEURISTIC RECONSTRUCTION</span>
           </div>
         </div>
       </div>
