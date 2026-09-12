@@ -336,6 +336,8 @@ export const EvidenceVault = () => {
         <StageIncidentTimeline
           onCompleteStage={() => setCurrentStage('reconstruction')}
           customTimeline={analysisData?.timeline}
+          normalizedEvents={analysisData?.normalized_events}
+          correlations={analysisData?.correlations}
         />
       )}
 
